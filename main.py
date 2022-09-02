@@ -55,7 +55,8 @@ def processRequest(req):
 
     elif intent == 'New User - yes':
         newUser = newUserDetails(req)
-        res = get_data(newUser)
+        res = get_data2(newUser)
+        print(res)
         return res
 
     elif intent == 'New User - no':
@@ -67,6 +68,30 @@ def get_data(fulfilment_text):
         "fulfillmentText": fulfilment_text
     }
 
+
+def get_data2(fulfilment_text):
+    serviceIntentCall= {
+        "fulfillmentText": fulfilment_text,
+        "followupEventInput": {
+            "name": "ServiceEvent",
+        }
+    }
+    print(serviceIntentCall)
+    return serviceIntentCall
+    # return {
+    #     "fulfillmentText": fulfilment_text,
+    #     "fulfillmentMessages": [
+    #         {
+    #             "text": {
+    #                 "text": [
+    #                     "I provide the following services a>	Based on your symptoms, I can find a doctor for you "
+    #                     "nearby,b>	I can provide emergency contacts for youc>	I can provide Pharmacy emergency "
+    #                     "contacts d>  Follow-up of previous doctor's appointments "
+    #                 ]
+    #             }
+    #         }
+    #     ]
+    # }
 
 def newUserDetails(req):
     userName = req['queryResult']['parameters']['user_name']
@@ -88,7 +113,6 @@ def newUserDetails(req):
     doc_ref.set(my_data)
     message = "Hello, " + userName + " welcome to MediBuddy. Your userID is : " + userID
     return message
-
 
 
 def collectUserDetails(req):
