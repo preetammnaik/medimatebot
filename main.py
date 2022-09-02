@@ -13,7 +13,8 @@ db = firestore.client()
 
 app = Flask(__name__)
 
-specialization=[]
+specialization = []
+
 
 @app.route('/')
 def start():
@@ -31,7 +32,17 @@ def index():
         r.headers['Content-Type'] = 'application/json'
         return r
 
+
+def collectUserDetails():
+    req = request.get_json(silent=True, force=True)
+    userName = req['queryResult']['parameters']['user_name']
+    userEmail = req['queryResult']['parameters']['user_mail']
+    print(userName)
+    print(userEmail)
+
+
 def processRequest(req):
+    print("1sada")
     query_response = req.get("queryResult")
     print(query_response)
     text = query_response.get('queryText', None)
@@ -40,22 +51,19 @@ def processRequest(req):
 
     if intent == 'finddoctors':
         print("HIiii")
-        getDoctors,specout = getListofDoctors(req)
+        getDoctors, specout = getListofDoctors(req)
         specialization.append(specout)
         res = get_data(getDoctors)
+        return res
 
-    if intent == 'doctorInfo':
-        doctorInfo = provideDoctorDetails(text,specialization)
+    elif intent == 'doctorInfo':
+        doctorInfo = provideDoctorDetails(text, specialization)
         res = get_data(doctorInfo)
+        return res
 
-    #if intent == 'language':
-
-
-
-
-    #print(getDoctors)
-    print(res)
-    return res
+    elif intent == 'CollectUserDetailIntent':
+        print("Hello cuser intnet")
+        collectUserDetails()
 
 
 def get_data(fulfilment_text):
@@ -70,56 +78,57 @@ def getListofDoctors(req):
 
     parameters = req['queryResult']['parameters']
     print('Dialogflow parameters:')
-    specialization= str(parameters.get('doctorspecialization'))
+    specialization = str(parameters.get('doctorspecialization'))
 
     if parameters.get('doctorspecialization'):
         if str(parameters.get('doctorspecialization')) == str('general physician'):
             GeneralPhysicians = db.collection(u'GeneralPhysician').get()
             for doctors in GeneralPhysicians:
-                docName = str(i)+'.' + u'{}'.format(doctors.to_dict()['Name'])
+                docName = str(i) + '.' + u'{}'.format(doctors.to_dict()['Name'])
                 i = i + 1
                 result.append(docName)
         elif str(parameters.get('doctorspecialization')) == str('gynaecologist'):
             Gynaecologist = db.collection(u'Gynaecologist').get()
             for doctors in Gynaecologist:
                 docID = u'{}'.format(doctors.to_dict()['DocID'])
-                docName = str(i)+'.' + u'{}'.format(doctors.to_dict()['Name'])+" "+"ID: "+ docID+"\n"
+                docName = str(i) + '.' + u'{}'.format(doctors.to_dict()['Name']) + " " + "ID: " + docID + "\n"
                 i = i + 1
                 result.append(docName)
         elif str(parameters.get('doctorspecialization')) == str('ophthalmologist'):
             Ophthalmologist = db.collection(u'Ophthalmologist').get()
             for doctors in Ophthalmologist:
-                docName = str(i)+'.' + u'{}'.format(doctors.to_dict()['Name'])
+                docName = str(i) + '.' + u'{}'.format(doctors.to_dict()['Name'])
                 i = i + 1
                 result.append(docName)
         elif str(parameters.get('doctorspecialization')) == str('cardiologist'):
             Cardiologist = db.collection(u'Cardiologist').get()
             for doctors in Cardiologist:
-                docName = str(i)+'.' + u'{}'.format(doctors.to_dict()['Name'])
+                docName = str(i) + '.' + u'{}'.format(doctors.to_dict()['Name'])
                 i = i + 1
                 result.append(docName)
         elif str(parameters.get('doctorspecialization')) == str('emergency'):
             Emergency = db.collection(u'Emergency').get()
             for doctors in Emergency:
-                docName = str(i)+'.' + u'{}'.format(doctors.to_dict()['Name'])
+                docName = str(i) + '.' + u'{}'.format(doctors.to_dict()['Name'])
                 i = i + 1
                 result.append(docName)
         elif str(parameters.get('doctorspecialization')) == str('pain'):
             pain = db.collection(u'GeneralPhysician').get()
             for doctors in pain:
-                docName = str(i)+'.' + u'{}'.format(doctors.to_dict()['Name'])
+                docName = str(i) + '.' + u'{}'.format(doctors.to_dict()['Name'])
                 i = i + 1
                 result.append(docName)
-        #print(result)
+        # print(result)
         res = "\r\n".join(x for x in result) + '\n' + 'Please choose a doctor for more info:)'
-        #print(res)
+        # print(res)
 
-        return res,specialization
+        return res, specialization
 
-def provideDoctorDetails(options,specialization):
+
+def provideDoctorDetails(options, specialization):
     options = options.upper()
     print(options)
-    Specialization =specialization[-1].capitalize()
+    Specialization = specialization[-1].capitalize()
     print(Specialization)
 
     detailedInfo = db.collection(Specialization).document(options)
