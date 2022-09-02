@@ -54,7 +54,10 @@ def processRequest(req):
         return res
 
     elif intent == 'New User - yes':
-        newUserDetails(req)
+        newUser = newUserDetails(req)
+        res = get_data(newUser)
+        return res
+
     elif intent == 'New User - no':
         collectUserDetails(req)
 
@@ -69,16 +72,23 @@ def newUserDetails(req):
     userName = req['queryResult']['parameters']['user_name']
     userEmail = req['queryResult']['parameters']['user_email']
 
-    userID = userEmail.split("@")
+    userIDsplit = userEmail.split("@")
+    userID = userIDsplit[0]
+
     print(userID)
 
     print(userName)
     print(userEmail)
 
     doc_ref = db.collection(u'Users').document()
-    my_data = {'UserName': userName, 'UserEmail': userEmail, 'userID': userID[0]}
+    my_data = {'UserName': userName, 'UserEmail': userEmail, 'userID': userID}
+    doc_reff = db.collection(u'UserHistory').document(userID)
+
     print(my_data)
     doc_ref.set(my_data)
+    message = "Hello, " + userName + " welcome to MediBuddy. Your userID is : " + userID
+    return message
+
 
 
 def collectUserDetails(req):
