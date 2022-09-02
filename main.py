@@ -33,14 +33,6 @@ def index():
         return r
 
 
-def collectUserDetails():
-    req = request.get_json(silent=True, force=True)
-    userName = req['queryResult']['parameters']['user_name']
-    userEmail = req['queryResult']['parameters']['user_mail']
-    print(userName)
-    print(userEmail)
-
-
 def processRequest(req):
     print("1sada")
     query_response = req.get("queryResult")
@@ -61,15 +53,36 @@ def processRequest(req):
         res = get_data(doctorInfo)
         return res
 
-    elif intent == 'CollectUserDetailIntent':
-        print("Hello cuser intnet")
-        collectUserDetails()
+    elif intent == 'New User - yes':
+        newUserDetails(req)
+    elif intent == 'New User - no':
+        collectUserDetails(req)
 
 
 def get_data(fulfilment_text):
     return {
         "fulfillmentText": fulfilment_text
     }
+
+
+def newUserDetails(req):
+    userName = req['queryResult']['parameters']['user_name']
+    userEmail = req['queryResult']['parameters']['user_email']
+
+    userID = userEmail.split("@")
+    print(userID)
+
+    print(userName)
+    print(userEmail)
+
+    doc_ref = db.collection(u'Users').document()
+    my_data = {'UserName': userName, 'UserEmail': userEmail, 'userID': userID[0]}
+    print(my_data)
+    doc_ref.set(my_data)
+
+
+def collectUserDetails(req):
+    pass
 
 
 def getListofDoctors(req):
