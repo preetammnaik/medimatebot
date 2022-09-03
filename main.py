@@ -60,8 +60,9 @@ def processRequest(req):
         return res
 
     elif intent == 'New User - no':
-        collectUserDetails(req)
-
+        existingUser = existingUserDetail(req)
+        res = get_data(existingUser)
+        return res
 
 def get_data(fulfilment_text):
     return {
@@ -98,7 +99,7 @@ def newUserDetails(req):
     userEmail = req['queryResult']['parameters']['user_email']
 
     userIDsplit = userEmail.split("@")
-    userID = userIDsplit[0]
+    userID = userIDsplit[0].append("@")
 
     print(userID)
 
@@ -115,8 +116,26 @@ def newUserDetails(req):
     return message
 
 
-def collectUserDetails(req):
-    pass
+def existingUserDetail(req):
+    userId = req['queryResult']['parameters']['user_Id']
+    print(userId)
+
+    userName = checkUserExistence(userId)
+    message = "Welcome back " + userName
+
+    return message
+
+
+def checkUserExistence(userId):
+    docs = db.collection('Users').where('userID', '=', userId).stream()
+    for doc in docs:
+        user = doc.to_dict()
+        userName = user.UserName
+        print(user.UserName)
+    if userName != '':
+        return userName
+    else:
+        return ''
 
 
 def getListofDoctors(req):
