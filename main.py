@@ -3,7 +3,6 @@ from firebase_admin import credentials
 from firebase_admin import firestore
 from firebase_admin import db
 from flask import Flask, request, jsonify, make_response, render_template, json
-import re
 
 cred = credentials.Certificate("serviceAccountKey.json")
 
@@ -59,54 +58,102 @@ def processRequest(req):
         print(res)
         return res
 
-    elif intent == 'New User - no':
+    elif intent == 'getUserId':
+        print('in here')
         existingUser = existingUserDetail(req)
+        if existingUser == '':
+            existingUser = 'Looks like you are not registered'
         res = get_data(existingUser)
         return res
 
 def get_data(fulfilment_text):
+    # return {
+    #     "fulfillmentText": fulfilment_text
+    # }
+    webhookresponse = fulfilment_text
     return {
-        "fulfillmentText": fulfilment_text
+        "fulfillmentText": fulfilment_text,
+        "fulfillmentMessages": [
+            {
+                "text": {
+                    "text": [
+                        webhookresponse,
+                        "I provide the following services a>	Based on your symptoms, I can find a doctor for you "
+                        "nearby,b>	I can provide emergency contacts for you c>	I can provide Pharmacy emergency "
+                        "contacts d>  Follow-up of previous doctor's appointments "
+                    ]
+
+                }
+            },
+            {
+                "text": {
+                    "text": [
+                        "I provide the following services a>	Based on your symptoms, I can find a doctor for you "
+                        "nearby,b>	I can provide emergency contacts for you c>	I can provide Pharmacy emergency "
+                        "contacts d>  Follow-up of previous doctor's appointments "
+                    ]
+                }
+            },
+            {"payload": {"rawPayload": "true", "sendAsMessage": "true"}}
+        ]
     }
 
 
 def get_data2(fulfilment_text):
-    serviceIntentCall= {
-        "fulfillmentText": fulfilment_text,
-        "followupEventInput": {
-            "name": "ServiceEvent",
-        }
-    }
-    print(serviceIntentCall)
-    return serviceIntentCall
-    # return {
+    # serviceIntentCall= {
     #     "fulfillmentText": fulfilment_text,
-    #     "fulfillmentMessages": [
-    #         {
-    #             "text": {
-    #                 "text": [
-    #                     "I provide the following services a>	Based on your symptoms, I can find a doctor for you "
-    #                     "nearby,b>	I can provide emergency contacts for youc>	I can provide Pharmacy emergency "
-    #                     "contacts d>  Follow-up of previous doctor's appointments "
-    #                 ]
-    #             }
-    #         }
-    #     ]
+    #     "followupEventInput": {
+    #         "name": "ServiceEvent",
+    #     }
     # }
+    # print(serviceIntentCall)
+    # return serviceIntentCall
+    webhookresponse = fulfilment_text
+    return {
+        "fulfillmentText": fulfilment_text,
+        "fulfillmentMessages": [
+            {
+                "text": {
+                    "text": [
+                        webhookresponse
+                    ]
+
+                }
+            },
+            {
+                "text": {
+                    "text": [
+                        "I provide the following services a>	Based on your symptoms, I can find a doctor for you "
+                        "nearby,b>	I can provide emergency contacts for youc>	I can provide Pharmacy emergency "
+                        "contacts d>  Follow-up of previous doctor's appointments "
+                    ]
+                }
+            },
+            {"payload": {"rawPayload": "true", "sendAsMessage": "true"}}
+        ]
+    }
 
 def newUserDetails(req):
     userName = req['queryResult']['parameters']['user_name']
     userEmail = req['queryResult']['parameters']['user_email']
 
     userIDsplit = userEmail.split("@")
-    userID = userIDsplit[0].append("@")
+    userID = userIDsplit[0] + "@"
 
     print(userID)
 
     print(userName)
     print(userEmail)
 
-    doc_ref = db.collection(u'Users').document()
+    docs = db.collection('Users').where('UserEMail', '==', userEmail).stream()
+    if userEmail in docs:
+        for doc in docs:
+            user = doc.to_dict()
+            user_Id = user['userID']
+        message = 'Looks like you are already registered with us, Your User Id is ' + user_Id
+        return message
+
+    doc_ref = db.collection(u'Users').document(userEmail)
     my_data = {'UserName': userName, 'UserEmail': userEmail, 'userID': userID}
     doc_reff = db.collection(u'UserHistory').document(userID)
 
@@ -118,7 +165,7 @@ def newUserDetails(req):
 
 def existingUserDetail(req):
     userId = req['queryResult']['parameters']['user_Id']
-    print(userId)
+    # print(userId)
 
     userName = checkUserExistence(userId)
     message = "Welcome back " + userName
@@ -127,15 +174,13 @@ def existingUserDetail(req):
 
 
 def checkUserExistence(userId):
-    docs = db.collection('Users').where('userID', '=', userId).stream()
+    docs = db.collection('Users').where('userID', '==', userId).stream()
     for doc in docs:
         user = doc.to_dict()
-        userName = user.UserName
-        print(user.UserName)
-    if userName != '':
-        return userName
-    else:
-        return ''
+        user_name = user['UserName']
+        print(user_name)
+
+        return user_name
 
 
 def getListofDoctors(req):
@@ -185,7 +230,7 @@ def getListofDoctors(req):
                 i = i + 1
                 result.append(docName)
         # print(result)
-        res = "\r\n".join(x for x in result) + '\n' + 'Please choose a doctor for more info:)'
+        res = "\r\n".join(x for x in result) + "\n" + 'Please choose a doctor for more info:)'
         # print(res)
 
         return res, specialization
