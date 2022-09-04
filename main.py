@@ -66,6 +66,25 @@ def processRequest(req):
         res = get_data(existingUser)
         return res
 
+    elif intent == 'pharmacy':
+        pharmacyDetail = providePharmacyDetails(req)
+        res = get_data(pharmacyDetail)
+        print(res)
+        return res
+
+    elif intent == 'emergency':
+        emergencyDetail = provideEmergencyDetails(req)
+        res = get_data(emergencyDetail)
+        print(res)
+        return res
+
+    elif intent == 'languagespecification':
+        doctorName = filterLanguageSpoken(text, specialization)
+        res = get_data(doctorName)
+        return res
+
+
+
 def get_data(fulfilment_text):
     # return {
     #     "fulfillmentText": fulfilment_text
@@ -260,6 +279,34 @@ def provideDoctorDetails(options, specialization):
     print(details)
 
     return details
+
+def filterLanguageSpecification(language,specialization):
+    Specialization = specialization[-1].capitalize()
+    print(Specialization)
+    languageFilter = db.collection(specialization).where(u'Language spoken',u'in',language)
+    langinfo.get()
+    details = []
+    if langinfo.exists:
+        name = "Name : " + u'{}'.format(info.to_dict()['Name'])
+        address = "Address : " + u'{}'.format(info.to_dict()['Address'])
+        phone = "Phone : " + u'{}'.format(info.to_dict()['Telephone'])
+        details.append(name)
+        details.append(address)
+        details.append(phone)
+    else:
+        details = 'Sorry, unfortunately we do not have any doctors who speaks your required language :('
+
+    print(details)
+
+    return details
+
+
+
+def provideEmergencyDetails(req):
+    pass
+
+def providePharmacyDetails(req):
+    pass
 
 
 if __name__ == "__main__":
