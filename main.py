@@ -78,79 +78,80 @@ def processRequest(req):
         print(res)
         return res
 
-    elif intent == 'languagespecification':
-        doctorName = filterLanguageSpoken(text, specialization)
-        res = get_data(doctorName)
-        return res
-
+    # elif intent == 'languagespecification':
+    #     doctorName = filterLanguageSpoken(text, specialization)
+    #     res = get_data(doctorName)
+    #     return res
 
 
 def get_data(fulfilment_text):
-    # return {
-    #     "fulfillmentText": fulfilment_text
-    # }
-    webhookresponse = fulfilment_text
     return {
-        "fulfillmentText": fulfilment_text,
-        "fulfillmentMessages": [
-            {
-                "text": {
-                    "text": [
-                        webhookresponse,
-                        "I provide the following services a>	Based on your symptoms, I can find a doctor for you "
-                        "nearby,b>	I can provide emergency contacts for you c>	I can provide Pharmacy emergency "
-                        "contacts d>  Follow-up of previous doctor's appointments "
-                    ]
-
-                }
-            },
-            {
-                "text": {
-                    "text": [
-                        "I provide the following services a>	Based on your symptoms, I can find a doctor for you "
-                        "nearby,b>	I can provide emergency contacts for you c>	I can provide Pharmacy emergency "
-                        "contacts d>  Follow-up of previous doctor's appointments "
-                    ]
-                }
-            },
-            {"payload": {"rawPayload": "true", "sendAsMessage": "true"}}
-        ]
+        "fulfillmentText": fulfilment_text
     }
+    # webhookresponse = fulfilment_text
+    # return {
+    #     "fulfillmentText": fulfilment_text,
+    #     "fulfillmentMessages": [
+    #         {
+    #             "text": {
+    #                 "text": [
+    #                     webhookresponse,
+    #                     "I provide the following services a>	Based on your symptoms, I can find a doctor for you "
+    #                     "nearby,b>	I can provide emergency contacts for you c>	I can provide Pharmacy emergency "
+    #                     "contacts d>  Follow-up of previous doctor's appointments "
+    #                 ]
+    #
+    #             }
+    #         },
+    #         {
+    #             "text": {
+    #                 "text": [
+    #                     "I provide the following services a>	Based on your symptoms, I can find a doctor for you "
+    #                     "nearby,b>	I can provide emergency contacts for you c>	I can provide Pharmacy emergency "
+    #                     "contacts d>  Follow-up of previous doctor's appointments "
+    #                 ]
+    #             }
+    #         },
+    #         {"payload": {"rawPayload": "true", "sendAsMessage": "true"}}
+    #     ]
+    # }
+    #
 
 
 def get_data2(fulfilment_text):
-    # serviceIntentCall= {
-    #     "fulfillmentText": fulfilment_text,
-    #     "followupEventInput": {
-    #         "name": "ServiceEvent",
-    #     }
-    # }
-    # print(serviceIntentCall)
-    # return serviceIntentCall
-    webhookresponse = fulfilment_text
-    return {
+    serviceIntentCall = {
         "fulfillmentText": fulfilment_text,
-        "fulfillmentMessages": [
-            {
-                "text": {
-                    "text": [
-                        webhookresponse
-                    ]
-
-                }
-            },
-            {
-                "text": {
-                    "text": [
-                        "I provide the following services a>	Based on your symptoms, I can find a doctor for you "
-                        "nearby,b>	I can provide emergency contacts for youc>	I can provide Pharmacy emergency "
-                        "contacts d>  Follow-up of previous doctor's appointments "
-                    ]
-                }
-            },
-            {"payload": {"rawPayload": "true", "sendAsMessage": "true"}}
-        ]
+        "followupEventInput": {
+            "name": "ServiceEvent",
+        }
     }
+    print(serviceIntentCall)
+    return serviceIntentCall
+    # webhookresponse = fulfilment_text
+    # return {
+    #     "fulfillmentText": fulfilment_text,
+    #     "fulfillmentMessages": [
+    #         {
+    #             "text": {
+    #                 "text": [
+    #                     webhookresponse
+    #                 ]
+    #
+    #             }
+    #         },
+    #         {
+    #             "text": {
+    #                 "text": [
+    #                     "I provide the following services a>	Based on your symptoms, I can find a doctor for you "
+    #                     "nearby,b>	I can provide emergency contacts for youc>	I can provide Pharmacy emergency "
+    #                     "contacts d>  Follow-up of previous doctor's appointments "
+    #                 ]
+    #             }
+    #         },
+    #         {"payload": {"rawPayload": "true", "sendAsMessage": "true"}}
+    #     ]
+    # }
+
 
 def newUserDetails(req):
     userName = req['queryResult']['parameters']['user_name']
@@ -187,7 +188,7 @@ def existingUserDetail(req):
     # print(userId)
 
     userName = checkUserExistence(userId)
-    message = "Welcome back " + userName
+    message = "Welcome back " + str(userName)
 
     return message
 
@@ -280,34 +281,35 @@ def provideDoctorDetails(options, specialization):
 
     return details
 
-def filterLanguageSpecification(language,specialization):
-    Specialization = specialization[-1].capitalize()
-    print(Specialization)
-    languageFilter = db.collection(specialization).where(u'Language spoken',u'in',language)
-    langinfo.get()
-    details = []
-    if langinfo.exists:
-        name = "Name : " + u'{}'.format(info.to_dict()['Name'])
-        address = "Address : " + u'{}'.format(info.to_dict()['Address'])
-        phone = "Phone : " + u'{}'.format(info.to_dict()['Telephone'])
-        details.append(name)
-        details.append(address)
-        details.append(phone)
-    else:
-        details = 'Sorry, unfortunately we do not have any doctors who speaks your required language :('
 
-    print(details)
-
-    return details
-
+# def filterLanguageSpecification(language,specialization):
+#     Specialization = specialization[-1].capitalize()
+#     print(Specialization)
+#     languageFilter = db.collection(specialization).where(u'Language spoken',u'in',language)
+#     langinfo.get()
+#     details = []
+#     if langinfo.exists:
+#         name = "Name : " + u'{}'.format(info.to_dict()['Name'])
+#         address = "Address : " + u'{}'.format(info.to_dict()['Address'])
+#         phone = "Phone : " + u'{}'.format(info.to_dict()['Telephone'])
+#         details.append(name)
+#         details.append(address)
+#         details.append(phone)
+#     else:
+#         details = 'Sorry, unfortunately we do not have any doctors who speaks your required language :('
+#
+#     print(details)
+#
+#     return details
 
 
 def provideEmergencyDetails(req):
     pass
+
 
 def providePharmacyDetails(req):
     pass
 
 
 if __name__ == "__main__":
-    app.run(debug=True, port=5001)
+    app.run(debug=True, port=5000)
