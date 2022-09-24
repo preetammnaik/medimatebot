@@ -36,7 +36,7 @@ def processRequest(req):
     print("1sada")
     query_response = req.get("queryResult")
     print(query_response)
-    text = query_response.get('queryText', None)
+    text = query_response.get('queryText')
     intent = query_response.get("intent").get("displayName")
     print(intent)
 
@@ -50,6 +50,7 @@ def processRequest(req):
     elif intent == 'doctorInfo':
         doctorInfo = provideDoctorDetails(text, specialization)
         res = get_data(doctorInfo)
+        print(res)
         return res
 
     elif intent == 'New User - yes':
@@ -210,47 +211,48 @@ def getListofDoctors(req):
     parameters = req['queryResult']['parameters']
     print('Dialogflow parameters:')
     specialization = str(parameters.get('doctorspecialization'))
+    language=str(parameters.get('language')).lower()
+    print(language)
 
     if parameters.get('doctorspecialization'):
         if str(parameters.get('doctorspecialization')) == str('general physician'):
-            GeneralPhysicians = db.collection(u'GeneralPhysician').get()
+            specialization1="GeneralPhysician"
+            GeneralPhysicians = processLanguage(specialization1,language)
             for doctors in GeneralPhysicians:
-                docName = str(i) + '.' + u'{}'.format(doctors.to_dict()['Name'])
+                docID = u'{}'.format(doctors.to_dict()['DocID'])
+                docName = str(i) + '.' + u'{}'.format(doctors.to_dict()['Name']) + "\n" + "Doctor ID: " + docID + "\n"
                 i = i + 1
                 result.append(docName)
         elif str(parameters.get('doctorspecialization')) == str('gynaecologist'):
-            Gynaecologist = db.collection(u'Gynaecologist').get()
+            Gynaecologist = processLanguage(specialization,language)
             for doctors in Gynaecologist:
                 docID = u'{}'.format(doctors.to_dict()['DocID'])
-                docName = str(i) + '.' + u'{}'.format(doctors.to_dict()['Name']) + " " + "ID: " + docID + "\n"
+                docName = str(i) + '.' + u'{}'.format(doctors.to_dict()['Name']) + "\n" + "Doctor ID: " + docID + "\n"
                 i = i + 1
                 result.append(docName)
         elif str(parameters.get('doctorspecialization')) == str('ophthalmologist'):
-            Ophthalmologist = db.collection(u'Ophthalmologist').get()
+            Ophthalmologist = processLanguage(specialization,language)
             for doctors in Ophthalmologist:
-                docName = str(i) + '.' + u'{}'.format(doctors.to_dict()['Name'])
+                docID = u'{}'.format(doctors.to_dict()['DocID'])
+                docName = str(i) + '.' + u'{}'.format(doctors.to_dict()['Name']) + "\n" + "Doctor ID: " + docID + "\n"
                 i = i + 1
                 result.append(docName)
         elif str(parameters.get('doctorspecialization')) == str('cardiologist'):
-            Cardiologist = db.collection(u'Cardiologist').get()
+            Cardiologist = processLanguage(specialization,language)
             for doctors in Cardiologist:
-                docName = str(i) + '.' + u'{}'.format(doctors.to_dict()['Name'])
-                i = i + 1
-                result.append(docName)
-        elif str(parameters.get('doctorspecialization')) == str('emergency'):
-            Emergency = db.collection(u'Emergency').get()
-            for doctors in Emergency:
-                docName = str(i) + '.' + u'{}'.format(doctors.to_dict()['Name'])
+                docID = u'{}'.format(doctors.to_dict()['DocID'])
+                docName = str(i) + '.' + u'{}'.format(doctors.to_dict()['Name']) + "\n" + "Doctor ID: " + docID + "\n"
                 i = i + 1
                 result.append(docName)
         elif str(parameters.get('doctorspecialization')) == str('pain'):
-            pain = db.collection(u'GeneralPhysician').get()
+            pain = processLanguage(specialization,language)
             for doctors in pain:
-                docName = str(i) + '.' + u'{}'.format(doctors.to_dict()['Name'])
+                docID = u'{}'.format(doctors.to_dict()['DocID'])
+                docName = str(i) + '.' + u'{}'.format(doctors.to_dict()['Name']) + "\n" + "Doctor ID: " + docID + "\n"
                 i = i + 1
                 result.append(docName)
-        # print(result)
-        res = "\r\n".join(x for x in result) + "\n" + 'Please choose a doctor for more info:)'
+        print(result)
+        res = "\r\n".join(x for x in result) + "\n" + 'Please enter the ID of a doctor for more info:)'
         # print(res)
 
         return res, specialization
@@ -259,48 +261,39 @@ def getListofDoctors(req):
 def provideDoctorDetails(options, specialization):
     options = options.upper()
     print(options)
-    Specialization = specialization[-1].capitalize()
-    print(Specialization)
+    if (specialization[-1] != "general physician"):
+        Specialization = specialization[-1].capitalize()
+
+    else:
+        Specialization = "GeneralPhysician"
+
 
     detailedInfo = db.collection(Specialization).document(options)
     info = detailedInfo.get()
     print(info)
 
-    details = []
+    res = ""
     if info.exists:
         name = "Name : " + u'{}'.format(info.to_dict()['Name'])
         address = "Address : " + u'{}'.format(info.to_dict()['Address'])
         phone = "Phone : " + u'{}'.format(info.to_dict()['Telephone'])
-        details.append(name)
-        details.append(address)
-        details.append(phone)
+        res = name+"\n"+address+"\n"+phone
     else:
-        details = 'Please make sure to enter the correct Doctor ID'
+        res = 'Please make sure to enter the correct Doctor ID'
 
-    print(details)
+    print(res)
 
-    return details
+    return res
 
 
-# def filterLanguageSpecification(language,specialization):
-#     Specialization = specialization[-1].capitalize()
-#     print(Specialization)
-#     languageFilter = db.collection(specialization).where(u'Language spoken',u'in',language)
-#     langinfo.get()
-#     details = []
-#     if langinfo.exists:
-#         name = "Name : " + u'{}'.format(info.to_dict()['Name'])
-#         address = "Address : " + u'{}'.format(info.to_dict()['Address'])
-#         phone = "Phone : " + u'{}'.format(info.to_dict()['Telephone'])
-#         details.append(name)
-#         details.append(address)
-#         details.append(phone)
-#     else:
-#         details = 'Sorry, unfortunately we do not have any doctors who speaks your required language :('
-#
-#     print(details)
-#
-#     return details
+def processLanguage(specialization,language):
+    if(specialization!="GeneralPhysician"):
+        Specialization = specialization.capitalize()
+        print(Specialization)
+    else:
+        Specialization = specialization
+    doctors = db.collection(Specialization).where(u'languageSpoken', u'array_contains', language).get()
+    return doctors
 
 
 def provideEmergencyDetails(req):
