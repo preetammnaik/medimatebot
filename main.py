@@ -10,10 +10,10 @@ firebase_admin.initialize_app(cred)
 
 db = firestore.client()
 
-session: any = ''
-query: any = ''
-result: any = ''
-userId: any = ''
+# session: any = ''
+# query: any = ''
+# result: any = ''
+# userId: any = ''
 
 app = Flask(__name__)
 
@@ -44,48 +44,55 @@ def processRequest(req):
     text = query_response.get('queryText')
     intent = query_response.get("intent").get("displayName")
     print(intent)
-    session = req['session']
-    query = req['queryResult']['parameters']['queryText']
-    result = req['queryResult']['parameters']['fulfillmentText']
+
+    # session = req['session']
+    # query = req['queryResult']['parameters']['queryText']
+    # result = req['queryResult']['parameters']['fulfillmentText']
 
     if intent == 'finddoctors':
         print("HIiii")
         getDoctors, specout = getListofDoctors(req)
         specialization.append(specout)
-        res = get_data(getDoctors)
+        res = fulfilmentResponse(getDoctors)
+        return res
 
     elif intent == 'doctorInfo':
         doctorInfo = provideDoctorDetails(text, specialization)
-        res = get_data(doctorInfo)
+        res = fulfilmentResponse(doctorInfo)
         print(res)
+        return res
 
     elif intent == 'New User - yes':
         newUser = newUserDetails(req)
-        res = get_data2(newUser)
+        res = createResponse(newUser)
         print(res)
+        return res
 
     elif intent == 'getUserId':
         print('in here')
         existingUser = existingUserDetail(req)
         if existingUser == '':
             existingUser = 'Looks like you are not registered'
-        res = get_data(existingUser)
+        res = fulfilmentResponse(existingUser)
+        return res
 
     elif intent == 'pharmacy':
         pharmacyDetail = providePharmacyDetails(req)
-        res = get_data(pharmacyDetail)
+        res = fulfilmentResponse(pharmacyDetail)
         print(res)
+        return res
 
     elif intent == 'emergency':
         emergencyDetail = provideEmergencyDetails(req)
-        res = get_data(emergencyDetail)
+        res = fulfilmentResponse(emergencyDetail)
         print(res)
+        return res
 
-    doc_reff = db.collection(u'UserHistory').document(userId)
-    my_data = {'session': session, 'query': query, 'result': result}
-    doc_reff.set(my_data)
+    # doc_reff = db.collection(u'UserHistory').document(userId)
+    # my_data = {'session': session, 'query': query, 'result': result}
+    # doc_reff.set(my_data)
 
-    return res
+
 
     # elif intent == 'languagespecification':
     #     doctorName = filterLanguageSpoken(text, specialization)
@@ -93,7 +100,7 @@ def processRequest(req):
     #     return res
 
 
-def get_data(fulfilment_text):
+def fulfilmentResponse(fulfilment_text):
     return {
         "fulfillmentText": fulfilment_text
     }
@@ -127,7 +134,7 @@ def get_data(fulfilment_text):
     #
 
 
-def get_data2(fulfilment_text):
+def createResponse(fulfilment_text):
     serviceIntentCall = {
         "fulfillmentText": fulfilment_text,
         "followupEventInput": {
