@@ -67,6 +67,10 @@ def processRequest(req):
         res = createResponse(newUser)
         print(res)
         return res
+    elif intent == 'New User - no':
+        existingUser = newUserDetails(req)
+        res = createResponse(existingUser)
+        return res
 
     elif intent == 'getUserId':
         print('in here')
