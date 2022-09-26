@@ -148,7 +148,7 @@ def createFollowUpResponse(fulfilment_text):
             "name": "ServiceEvent",
         }
     }
-    # print(serviceIntentCall)
+    print(serviceIntentCall)
     return serviceIntentCall
     # webhookresponse = fulfilment_text
     # return {
