@@ -53,12 +53,12 @@ def processRequest(req):
         print("HIiii")
         getDoctors, specout = getListofDoctors(req)
         specialization.append(specout)
-        res = fulfilmentResponse(getDoctors)
+        res = createResponse(getDoctors)
         return res
 
     elif intent == 'doctorInfo':
         doctorInfo = provideDoctorDetails(text, specialization)
-        res = fulfilmentResponse(doctorInfo)
+        res = createResponse(doctorInfo)
         print(res)
         return res
 
@@ -68,8 +68,13 @@ def processRequest(req):
         print(res)
         return res
     elif intent == 'New User - no':
-        existingUser = newUserDetails(req)
-        res = createResponse(existingUser)
+        existingUser = existingUserDetail(req)
+        if existingUser == '':
+            existingUser = 'Looks like you are not registered'
+            res = createResponse(existingUser)
+        else:
+            res = createFollowUpResponse(existingUser)
+
         return res
 
     elif intent == 'getUserId':
@@ -77,18 +82,18 @@ def processRequest(req):
         existingUser = existingUserDetail(req)
         if existingUser == '':
             existingUser = 'Looks like you are not registered'
-        res = fulfilmentResponse(existingUser)
+        res = createResponse(existingUser)
         return res
 
     elif intent == 'pharmacy':
         pharmacyDetail = providePharmacyDetails(req)
-        res = fulfilmentResponse(pharmacyDetail)
+        res = createResponse(pharmacyDetail)
         print(res)
         return res
 
     elif intent == 'emergency':
         emergencyDetail = provideEmergencyDetails(req)
-        res = fulfilmentResponse(emergencyDetail)
+        res = createResponse(emergencyDetail)
         print(res)
         return res
 
@@ -96,15 +101,13 @@ def processRequest(req):
     # my_data = {'session': session, 'query': query, 'result': result}
     # doc_reff.set(my_data)
 
-
-
     # elif intent == 'languagespecification':
     #     doctorName = filterLanguageSpoken(text, specialization)
     #     res = get_data(doctorName)
     #     return res
 
 
-def fulfilmentResponse(fulfilment_text):
+def createResponse(fulfilment_text):
     return {
         "fulfillmentText": fulfilment_text
     }
@@ -138,7 +141,7 @@ def fulfilmentResponse(fulfilment_text):
     #
 
 
-def createResponse(fulfilment_text):
+def createFollowUpResponse(fulfilment_text):
     serviceIntentCall = {
         "fulfillmentText": fulfilment_text,
         "followupEventInput": {
