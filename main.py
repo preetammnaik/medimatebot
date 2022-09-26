@@ -10,6 +10,11 @@ firebase_admin.initialize_app(cred)
 
 db = firestore.client()
 
+session: any = ''
+query: any = ''
+result: any = ''
+userId: any = ''
+
 app = Flask(__name__)
 
 specialization = []
@@ -20,7 +25,7 @@ def start():
     return render_template('index.html')
 
 
-@app.route('/chat', methods=['POST'])
+@app.route('/chat', methods=['GET', 'POST'])
 def index():
     if request.method == "POST":
         req = request.get_json(silent=True, force=True)
@@ -39,25 +44,25 @@ def processRequest(req):
     text = query_response.get('queryText')
     intent = query_response.get("intent").get("displayName")
     print(intent)
+    session = req['session']
+    query = req['queryResult']['parameters']['queryText']
+    result = req['queryResult']['parameters']['fulfillmentText']
 
     if intent == 'finddoctors':
         print("HIiii")
         getDoctors, specout = getListofDoctors(req)
         specialization.append(specout)
         res = get_data(getDoctors)
-        return res
 
     elif intent == 'doctorInfo':
         doctorInfo = provideDoctorDetails(text, specialization)
         res = get_data(doctorInfo)
         print(res)
-        return res
 
     elif intent == 'New User - yes':
         newUser = newUserDetails(req)
         res = get_data2(newUser)
         print(res)
-        return res
 
     elif intent == 'getUserId':
         print('in here')
@@ -65,19 +70,22 @@ def processRequest(req):
         if existingUser == '':
             existingUser = 'Looks like you are not registered'
         res = get_data(existingUser)
-        return res
 
     elif intent == 'pharmacy':
         pharmacyDetail = providePharmacyDetails(req)
         res = get_data(pharmacyDetail)
         print(res)
-        return res
 
     elif intent == 'emergency':
         emergencyDetail = provideEmergencyDetails(req)
         res = get_data(emergencyDetail)
         print(res)
-        return res
+
+    doc_reff = db.collection(u'UserHistory').document(userId)
+    my_data = {'session': session, 'query': query, 'result': result}
+    doc_reff.set(my_data)
+
+    return res
 
     # elif intent == 'languagespecification':
     #     doctorName = filterLanguageSpoken(text, specialization)
@@ -126,7 +134,7 @@ def get_data2(fulfilment_text):
             "name": "ServiceEvent",
         }
     }
-    print(serviceIntentCall)
+    # print(serviceIntentCall)
     return serviceIntentCall
     # webhookresponse = fulfilment_text
     # return {
@@ -159,28 +167,37 @@ def newUserDetails(req):
     userEmail = req['queryResult']['parameters']['user_email']
 
     userIDsplit = userEmail.split("@")
-    userID = userIDsplit[0] + "@"
+    userId = userIDsplit[0] + "@"
 
-    print(userID)
-
+    print(userId)
     print(userName)
     print(userEmail)
 
-    docs = db.collection('Users').where('UserEMail', '==', userEmail).stream()
-    if userEmail in docs:
-        for doc in docs:
-            user = doc.to_dict()
-            user_Id = user['userID']
-        message = 'Looks like you are already registered with us, Your User Id is ' + user_Id
-        return message
+    user_doc_ref = db.collection(u'Users').where(u'userID', u'==', userId).stream()
+    print("okayyyyyyyyyy")
+    documents = [d for d in user_doc_ref]
 
-    doc_ref = db.collection(u'Users').document(userEmail)
-    my_data = {'UserName': userName, 'UserEmail': userEmail, 'userID': userID}
-    doc_reff = db.collection(u'UserHistory').document(userID)
+    if len(documents):
+        for document in documents:
+            print(u'Not empty')
+    else:
+        message = 'Looks like you are already registered with us, Your User Id is ' + userId
+        print(u'empty query')
+
+    # docs = db.collection('Users').where('UserEmail', '==', userEmail).stream()
+    # if userEmail in docs:
+    #     for doc in docs:
+    #         user = doc.to_dict()
+    #         user_Id = user['userID']
+    #     message = 'Looks like you are already registered with us, Your User Id is ' + user_Id
+    #     return message
+
+    doc_ref = db.collection(u'Users').document(userId)
+    my_data = {'UserName': userName, 'UserEmail': userEmail, 'userID': userId}
 
     print(my_data)
     doc_ref.set(my_data)
-    message = "Hello, " + userName + " welcome to MediBuddy. Your userID is : " + userID
+    message = "Hello, " + userName + " welcome to MediBuddy. Your userID is : " + userId
     return message
 
 
@@ -211,41 +228,41 @@ def getListofDoctors(req):
     parameters = req['queryResult']['parameters']
     print('Dialogflow parameters:')
     specialization = str(parameters.get('doctorspecialization'))
-    language=str(parameters.get('language')).lower()
+    language = str(parameters.get('language')).lower()
     print(language)
 
     if parameters.get('doctorspecialization'):
         if str(parameters.get('doctorspecialization')) == str('general physician'):
-            specialization1="GeneralPhysician"
-            GeneralPhysicians = processLanguage(specialization1,language)
+            specialization1 = "GeneralPhysician"
+            GeneralPhysicians = processLanguage(specialization1, language)
             for doctors in GeneralPhysicians:
                 docID = u'{}'.format(doctors.to_dict()['DocID'])
                 docName = str(i) + '.' + u'{}'.format(doctors.to_dict()['Name']) + "\n" + "Doctor ID: " + docID + "\n"
                 i = i + 1
                 result.append(docName)
         elif str(parameters.get('doctorspecialization')) == str('gynaecologist'):
-            Gynaecologist = processLanguage(specialization,language)
+            Gynaecologist = processLanguage(specialization, language)
             for doctors in Gynaecologist:
                 docID = u'{}'.format(doctors.to_dict()['DocID'])
                 docName = str(i) + '.' + u'{}'.format(doctors.to_dict()['Name']) + "\n" + "Doctor ID: " + docID + "\n"
                 i = i + 1
                 result.append(docName)
         elif str(parameters.get('doctorspecialization')) == str('ophthalmologist'):
-            Ophthalmologist = processLanguage(specialization,language)
+            Ophthalmologist = processLanguage(specialization, language)
             for doctors in Ophthalmologist:
                 docID = u'{}'.format(doctors.to_dict()['DocID'])
                 docName = str(i) + '.' + u'{}'.format(doctors.to_dict()['Name']) + "\n" + "Doctor ID: " + docID + "\n"
                 i = i + 1
                 result.append(docName)
         elif str(parameters.get('doctorspecialization')) == str('cardiologist'):
-            Cardiologist = processLanguage(specialization,language)
+            Cardiologist = processLanguage(specialization, language)
             for doctors in Cardiologist:
                 docID = u'{}'.format(doctors.to_dict()['DocID'])
                 docName = str(i) + '.' + u'{}'.format(doctors.to_dict()['Name']) + "\n" + "Doctor ID: " + docID + "\n"
                 i = i + 1
                 result.append(docName)
         elif str(parameters.get('doctorspecialization')) == str('pain'):
-            pain = processLanguage(specialization,language)
+            pain = processLanguage(specialization, language)
             for doctors in pain:
                 docID = u'{}'.format(doctors.to_dict()['DocID'])
                 docName = str(i) + '.' + u'{}'.format(doctors.to_dict()['Name']) + "\n" + "Doctor ID: " + docID + "\n"
@@ -267,7 +284,6 @@ def provideDoctorDetails(options, specialization):
     else:
         Specialization = "GeneralPhysician"
 
-
     detailedInfo = db.collection(Specialization).document(options)
     info = detailedInfo.get()
     print(info)
@@ -277,7 +293,7 @@ def provideDoctorDetails(options, specialization):
         name = "Name : " + u'{}'.format(info.to_dict()['Name'])
         address = "Address : " + u'{}'.format(info.to_dict()['Address'])
         phone = "Phone : " + u'{}'.format(info.to_dict()['Telephone'])
-        res = name+"\n"+address+"\n"+phone
+        res = name + "\n" + address + "\n" + phone
     else:
         res = 'Please make sure to enter the correct Doctor ID'
 
@@ -286,8 +302,8 @@ def provideDoctorDetails(options, specialization):
     return res
 
 
-def processLanguage(specialization,language):
-    if(specialization!="GeneralPhysician"):
+def processLanguage(specialization, language):
+    if (specialization != "GeneralPhysician"):
         Specialization = specialization.capitalize()
         print(Specialization)
     else:
