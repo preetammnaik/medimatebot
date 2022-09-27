@@ -13,7 +13,7 @@ db = firestore.client()
 session: any = ''
 query: any = ''
 result: any = ''
-userId: any = ''
+userID=[]
 
 app = Flask(__name__)
 
@@ -37,7 +37,16 @@ def index():
         return r
 
 
+def saveConversations(query, result, session, userid):
+    doc_reff = db.collection(u'UserHistory').document(userid)
+    my_data = {'session': session, 'query': query, 'result': result}
+    doc_reff.set(my_data)
+    print(result)
+    print(session)
+
+
 def processRequest(req):
+    print(userID)
     query_response = req.get("queryResult")
     intent = query_response.get("intent").get("displayName")
     print(query_response)
@@ -45,9 +54,6 @@ def processRequest(req):
     query = query_response.get('queryText')
     result = query_response.get("fulfillmentText")
     session = query_response.get("outputContexts")[0].get("name").split("/")[-3]
-
-    print(result)
-    print(session)
 
     if intent == 'finddoctors':
         print("HIiii")
@@ -63,10 +69,12 @@ def processRequest(req):
         return res
 
     elif intent == 'New User - yes':
-        newUser = newUserDetails(req)
-        res = createResponse(newUser)
+        newUser = newUserDetails(req, session)
+        saveConversations(query, result, session, userID[-1])
+        res = createFollowUpResponse(newUser)
         print(res)
         return res
+
     elif intent == 'New User - no':
         existingUser = existingUserDetail(req)
         if existingUser == '':
@@ -96,10 +104,6 @@ def processRequest(req):
         res = createResponse(emergencyDetail)
         print(res)
         return res
-
-    # doc_reff = db.collection(u'UserHistory').document(userId)
-    # my_data = {'session': session, 'query': query, 'result': result}
-    # doc_reff.set(my_data)
 
     # elif intent == 'languagespecification':
     #     doctorName = filterLanguageSpoken(text, specialization)
@@ -176,15 +180,16 @@ def createFollowUpResponse(fulfilment_text):
     # }
 
 
-def newUserDetails(req):
+def newUserDetails(req, session):
     userName = req['queryResult']['parameters']['user_name']
     userEmail = req['queryResult']['parameters']['user_email']
     zipCode = req['queryResult']['parameters']['user_zipCode']
 
     userIDsplit = userEmail.split("@")
     userId = userIDsplit[0] + "@"
+    userID.append(userId)
 
-    print(userId)
+    print(userID)
     print(userName)
     print(userEmail)
 
@@ -208,7 +213,12 @@ def newUserDetails(req):
     #     return message
 
     doc_ref = db.collection(u'Users').document(userId)
-    my_data = {'UserName': userName, 'UserEmail': userEmail, 'userID': userId,'userZipcode': zipCode}
+    my_data = {'UserName': userName, 'UserEmail': userEmail, 'userID': userId, 'userZipcode': zipCode}
+
+    doc_userhistory = db.collection(u'UserHistory').document(userId)
+    my_userHistory = {'sessionID': session, 'userID': userId}
+    print(doc_userhistory)
+    doc_userhistory.set(my_userHistory)
 
     print(my_data)
     doc_ref.set(my_data)
@@ -293,7 +303,7 @@ def getListofDoctors(req):
 def provideDoctorDetails(options, specialization):
     options = options.upper()
     print(options)
-    if (specialization[-1] != "general physician"):
+    if specialization[-1] != "general physician":
         Specialization = specialization[-1].capitalize()
 
     else:
