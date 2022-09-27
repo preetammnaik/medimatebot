@@ -13,7 +13,7 @@ db = firestore.client()
 session: any = ''
 query: any = ''
 result: any = ''
-userID=[]
+userID=['test']
 
 app = Flask(__name__)
 
@@ -38,8 +38,8 @@ def index():
 
 
 def saveConversations(query, result, session, userid):
-    doc_reff = db.collection(u'UserHistory').document(userid)
-    my_data = {'session': session, 'query': query, 'result': result}
+    doc_reff = db.collection(u'UserHistory').document(session)
+    my_data = { 'query': query, 'result': result,'userID':userid}
     doc_reff.set(my_data)
     print(result)
     print(session)
@@ -71,6 +71,7 @@ def processRequest(req):
     elif intent == 'New User - yes':
         newUser = newUserDetails(req, session)
         saveConversations(query, result, session, userID[-1])
+        print("i am coming till here :p")
         res = createFollowUpResponse(newUser)
         print(res)
         return res
@@ -104,6 +105,8 @@ def processRequest(req):
         res = createResponse(emergencyDetail)
         print(res)
         return res
+
+    saveConversations(query,result,session,userID[-1])
 
     # elif intent == 'languagespecification':
     #     doctorName = filterLanguageSpoken(text, specialization)
@@ -215,8 +218,8 @@ def newUserDetails(req, session):
     doc_ref = db.collection(u'Users').document(userId)
     my_data = {'UserName': userName, 'UserEmail': userEmail, 'userID': userId, 'userZipcode': zipCode}
 
-    doc_userhistory = db.collection(u'UserHistory').document(userId)
-    my_userHistory = {'sessionID': session, 'userID': userId}
+    doc_userhistory = db.collection(u'UserHistory').document(session)
+    my_userHistory = { 'userID': userId}
     print(doc_userhistory)
     doc_userhistory.set(my_userHistory)
 
