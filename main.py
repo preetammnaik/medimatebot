@@ -38,16 +38,16 @@ def index():
 
 
 def processRequest(req):
-    print("1sada")
     query_response = req.get("queryResult")
-    print(query_response)
-    text = query_response.get('queryText')
     intent = query_response.get("intent").get("displayName")
-    print(intent)
+    print(query_response)
 
-    # session = req['session']
-    # query = req['queryResult']['parameters']['queryText']
-    # result = req['queryResult']['parameters']['fulfillmentText']
+    query = query_response.get('queryText')
+    result = query_response.get("fulfillmentText")
+    session = query_response.get("outputContexts")[0].get("name").split("/")[-3]
+
+    print(result)
+    print(session)
 
     if intent == 'finddoctors':
         print("HIiii")
@@ -57,7 +57,7 @@ def processRequest(req):
         return res
 
     elif intent == 'doctorInfo':
-        doctorInfo = provideDoctorDetails(text, specialization)
+        doctorInfo = provideDoctorDetails(query, specialization)
         res = createResponse(doctorInfo)
         print(res)
         return res
