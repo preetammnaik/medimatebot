@@ -10,10 +10,10 @@ firebase_admin.initialize_app(cred)
 
 db = firestore.client()
 
-# session: any = ''
-# query: any = ''
-# result: any = ''
-# userId: any = ''
+session: any = ''
+query: any = ''
+result: any = ''
+userId: any = ''
 
 app = Flask(__name__)
 
@@ -179,6 +179,7 @@ def createFollowUpResponse(fulfilment_text):
 def newUserDetails(req):
     userName = req['queryResult']['parameters']['user_name']
     userEmail = req['queryResult']['parameters']['user_email']
+    zipCode = req['queryResult']['parameters']['user_zipCode']
 
     userIDsplit = userEmail.split("@")
     userId = userIDsplit[0] + "@"
@@ -207,7 +208,7 @@ def newUserDetails(req):
     #     return message
 
     doc_ref = db.collection(u'Users').document(userId)
-    my_data = {'UserName': userName, 'UserEmail': userEmail, 'userID': userId}
+    my_data = {'UserName': userName, 'UserEmail': userEmail, 'userID': userId,'userZipcode': zipCode}
 
     print(my_data)
     doc_ref.set(my_data)
