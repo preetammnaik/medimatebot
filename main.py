@@ -13,7 +13,7 @@ db = firestore.client()
 session: any = ''
 query: any = ''
 result: any = ''
-userID=['test']
+userID = ['test']
 
 app = Flask(__name__)
 
@@ -37,81 +37,95 @@ def index():
         return r
 
 
-def saveConversations(query, result, session, userid):
+def saveConversations(query, result, session, userid, intent):
+    print('Im in save')
     doc_reff = db.collection(u'UserHistory').document(session)
-    my_data = { 'query': query, 'result': result,'userID':userid}
-    doc_reff.set(my_data)
-    print(result)
-    print(session)
+    user_conversation = {
+        'query': query,
+        'reply': result
+    }
+    print(userid)
+    sessionConvo = {'userID': userid}
+    doc_reff.set(sessionConvo)
+    intentConvo = doc_reff.collection('conversation').document(intent)
+    intentConvo.set(user_conversation)
+     # print(result)
+    # print(session)
 
 
 def processRequest(req):
     print(userID)
     query_response = req.get("queryResult")
     intent = query_response.get("intent").get("displayName")
-    print(query_response)
-
+    # print(query_response)
+    res =''
     query = query_response.get('queryText')
     result = query_response.get("fulfillmentText")
     session = query_response.get("outputContexts")[0].get("name").split("/")[-3]
 
     if intent == 'finddoctors':
-        print("HIiii")
+        # print("HIiii")
         getDoctors, specout = getListofDoctors(req)
         specialization.append(specout)
+        saveConversations(query, result, session, userID[-1], intent)
         res = createResponse(getDoctors)
-        return res
+        # return res
 
     elif intent == 'doctorInfo':
         doctorInfo = provideDoctorDetails(query, specialization)
         res = createResponse(doctorInfo)
+        saveConversations(query, result, session, userID[-1], intent)
+
         print(res)
-        return res
+        # return res
 
     elif intent == 'New User - yes':
-        newUser = newUserDetails(req, session)
-        saveConversations(query, result, session, userID[-1])
+        res = newUserDetails(req, session)
+        saveConversations(query, result, session, userID[-1], intent)
+        # saveConversations(query, result, session, userID[-1])
         print("i am coming till here :p")
-        res = createFollowUpResponse(newUser)
+        # res = createResponseForNewUser(newUser)
         print(res)
-        return res
+        # return res
 
-    elif intent == 'New User - no':
-        existingUser = existingUserDetail(req)
-        if existingUser == '':
-            existingUser = 'Looks like you are not registered'
-            res = createResponse(existingUser)
-        else:
-            res = createFollowUpResponse(existingUser)
-
-        return res
+    # elif intent == 'New User - no':
+    #     existingUser = existingUserDetail(req)
+    #     # if existingUser == '':
+    #     #     existingUser = 'Looks like you are not registered'
+    #     #     res = createResponse(existingUser)
+    #     # else:
+    #     #     res = createFollowUpResponse(existingUser)
+    #
+    #     return res
 
     elif intent == 'getUserId':
         print('in here')
-        existingUser = existingUserDetail(req)
-        if existingUser == '':
-            existingUser = 'Looks like you are not registered'
-        res = createResponse(existingUser)
-        return res
+        res = existingUserDetail(req)
+        saveConversations(query, result, session, userID[-1], intent)
+        # res = createResponseForNewUser(existingUser)
+        # return res
 
     elif intent == 'pharmacy':
         pharmacyDetail = providePharmacyDetails(req)
         res = createResponse(pharmacyDetail)
+        saveConversations(query, result, session, userID[-1], intent)
         print(res)
-        return res
+        # return res
 
     elif intent == 'emergency':
         emergencyDetail = provideEmergencyDetails(req)
         res = createResponse(emergencyDetail)
+        saveConversations(query, result, session, userID[-1], intent)
         print(res)
-        return res
 
-    saveConversations(query,result,session,userID[-1])
 
     # elif intent == 'languagespecification':
     #     doctorName = filterLanguageSpoken(text, specialization)
     #     res = get_data(doctorName)
     #     return res
+
+
+    return res
 
 
 def createResponse(fulfilment_text):
@@ -146,6 +160,31 @@ def createResponse(fulfilment_text):
     #     ]
     # }
     #
+
+
+def createResponseForNewUser(fulfilment_text):
+    fulfillmentMessages = {
+        "fulfillmentMessages": [{
+            "text": {
+                "text": [
+                    fulfilment_text
+                ]
+            },
+            "platform": "TELEGRAM"
+        },
+            {
+                "quickReplies": {
+                    "title": "Please choose any option 👇",
+                    "quickReplies": [
+                        "Find Doctor",
+                        "Emergency Room Contact",
+                        "Pharmacy Contact"
+                    ]
+                },
+                "platform": "TELEGRAM"
+            }]
+    }
+    return fulfillmentMessages
 
 
 def createFollowUpResponse(fulfilment_text):
@@ -188,24 +227,17 @@ def newUserDetails(req, session):
     userEmail = req['queryResult']['parameters']['user_email']
     zipCode = req['queryResult']['parameters']['user_zipCode']
 
-    userIDsplit = userEmail.split("@")
-    userId = userIDsplit[0] + "@"
-    userID.append(userId)
-
     print(userID)
     print(userName)
     print(userEmail)
 
-    user_doc_ref = db.collection(u'Users').where(u'userID', u'==', userId).stream()
-    print("okayyyyyyyyyy")
-    documents = [d for d in user_doc_ref]
-
-    if len(documents):
-        for document in documents:
-            print(u'Not empty')
+    if checkUserExistenceByEmail(userEmail):
+        userId = saveUserDetail(session, userEmail, userName, zipCode)
+        message = "Hello, " + userName + " welcome to MediMate. Your userID is : " + userId
+        res = createResponseForNewUser(message)
     else:
-        message = 'Looks like you are already registered with us, Your User Id is ' + userId
-        print(u'empty query')
+        message = 'Looks like this email id is already registered with us, please try a different email Id'
+        res = createResponse(message)
 
     # docs = db.collection('Users').where('UserEmail', '==', userEmail).stream()
     # if userEmail in docs:
@@ -215,18 +247,37 @@ def newUserDetails(req, session):
     #     message = 'Looks like you are already registered with us, Your User Id is ' + user_Id
     #     return message
 
+    return res
+
+
+def saveUserDetail(session, userEmail, userName, zipCode):
+    userIDsplit = userEmail.split("@")
+    userId = userIDsplit[0] + "@"
+    userID.append(userId)
     doc_ref = db.collection(u'Users').document(userId)
     my_data = {'UserName': userName, 'UserEmail': userEmail, 'userID': userId, 'userZipcode': zipCode}
-
     doc_userhistory = db.collection(u'UserHistory').document(session)
-    my_userHistory = { 'userID': userId}
-    print(doc_userhistory)
-    doc_userhistory.set(my_userHistory)
-
+    my_userHistory = {'userID': userId}
     print(my_data)
+    print(doc_userhistory)
+
+    doc_userhistory.set(my_userHistory)
     doc_ref.set(my_data)
-    message = "Hello, " + userName + " welcome to MediBuddy. Your userID is : " + userId
-    return message
+
+    return userId
+
+
+def checkUserExistenceByEmail(userEmail):
+    user_doc_ref = db.collection(u'Users').where(u'UserEmail', u'==', userEmail).stream()
+    print("okayyyyyyyyyy")
+    documents = [d for d in user_doc_ref]
+    if len(documents):
+        for document in documents:
+            print(u'Not empty')
+            return False
+    else:
+        print(u'empty query')
+        return True
 
 
 def existingUserDetail(req):
@@ -234,9 +285,29 @@ def existingUserDetail(req):
     # print(userId)
 
     userName = checkUserExistence(userId)
-    message = "Welcome back " + str(userName)
 
-    return message
+
+    if (userName == "") or (userName is None):
+        message = "Looks like you are not registered with us yet \n Please write 'register' to save your details"
+        res = createResponse(message)
+    else:
+        message = "Welcome back " + str(userName)
+        fetchPreviousConversation(userId)
+        res = createResponseForNewUser(message)
+
+    return res
+
+
+def fetchPreviousConversation(userId):
+    docs = db.collection('UserHistory').where('userID', '==', userId).stream()
+    for doc in docs:
+        user = doc.to_dict()
+        previous_convo = user['conversation']
+        # for convo in previous_convo:
+        #     if convo['intent' == 'finddoctors']:
+        #         previousReply = convo['reply']
+
+        print(user_name)
 
 
 def checkUserExistence(userId):
@@ -254,7 +325,7 @@ def getListofDoctors(req):
     i = 1
 
     parameters = req['queryResult']['parameters']
-    print('Dialogflow parameters:')
+    # print('Dialogflow parameters:')
     specialization = str(parameters.get('doctorspecialization'))
     language = str(parameters.get('language')).lower()
     print(language)
@@ -265,40 +336,40 @@ def getListofDoctors(req):
             GeneralPhysicians = processLanguage(specialization1, language)
             for doctors in GeneralPhysicians:
                 docID = u'{}'.format(doctors.to_dict()['DocID'])
-                docName = str(i) + '.' + u'{}'.format(doctors.to_dict()['Name']) + "\n" + "Doctor ID: " + docID + "\n"
+                docName = str(i) + '👉' + u'{}'.format(doctors.to_dict()['Name']) + "\n" + "Doctor ID: " + docID + "\n"
                 i = i + 1
                 result.append(docName)
         elif str(parameters.get('doctorspecialization')) == str('gynaecologist'):
             Gynaecologist = processLanguage(specialization, language)
             for doctors in Gynaecologist:
                 docID = u'{}'.format(doctors.to_dict()['DocID'])
-                docName = str(i) + '.' + u'{}'.format(doctors.to_dict()['Name']) + "\n" + "Doctor ID: " + docID + "\n"
+                docName = str(i) + '👉' + u'{}'.format(doctors.to_dict()['Name']) + "\n" + "Doctor ID: " + docID + "\n"
                 i = i + 1
                 result.append(docName)
         elif str(parameters.get('doctorspecialization')) == str('ophthalmologist'):
             Ophthalmologist = processLanguage(specialization, language)
             for doctors in Ophthalmologist:
                 docID = u'{}'.format(doctors.to_dict()['DocID'])
-                docName = str(i) + '.' + u'{}'.format(doctors.to_dict()['Name']) + "\n" + "Doctor ID: " + docID + "\n"
+                docName = str(i) + '👉' + u'{}'.format(doctors.to_dict()['Name']) + "\n" + "Doctor ID: " + docID + "\n"
                 i = i + 1
                 result.append(docName)
         elif str(parameters.get('doctorspecialization')) == str('cardiologist'):
             Cardiologist = processLanguage(specialization, language)
             for doctors in Cardiologist:
                 docID = u'{}'.format(doctors.to_dict()['DocID'])
-                docName = str(i) + '.' + u'{}'.format(doctors.to_dict()['Name']) + "\n" + "Doctor ID: " + docID + "\n"
+                docName = str(i) + '👉' + u'{}'.format(doctors.to_dict()['Name']) + "\n" + "Doctor ID: " + docID + "\n"
                 i = i + 1
                 result.append(docName)
         elif str(parameters.get('doctorspecialization')) == str('pain'):
             pain = processLanguage(specialization, language)
             for doctors in pain:
                 docID = u'{}'.format(doctors.to_dict()['DocID'])
-                docName = str(i) + '.' + u'{}'.format(doctors.to_dict()['Name']) + "\n" + "Doctor ID: " + docID + "\n"
+                docName = str(i) + '👉' + u'{}'.format(doctors.to_dict()['Name']) + "\n" + "Doctor ID: " + docID + "\n"
                 i = i + 1
                 result.append(docName)
         print(result)
         res = "\r\n".join(x for x in result) + "\n" + 'Please enter the ID of a doctor for more info:)'
-        # print(res)
+        print(res)
 
         return res, specialization
 
