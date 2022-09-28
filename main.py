@@ -206,7 +206,7 @@ def createResponseForOldUser(fulfilment_text):
                     "title": "Please choose any option 👇",
                     "quickReplies": [
                         "Notes",
-                        "Services Menu"
+                        "Go to services menu"
                     ]
                 },
                 "platform": "TELEGRAM"
@@ -319,7 +319,8 @@ def existingUserDetail(req):
     userID.append(userId)
 
     if (userName == "") or (userName is None):
-        message = "Looks like you are not registered with us yet \n Please write 'register' to save your details"
+        message = "Looks like you are not registered with us yet \n " \
+                  "Please write 'register' to save your details. \n \n Or would you like to re-enter your user-Id"
         res = createResponse(message)
     else:
         message, doesConvoExist = fetchPreviousConversation(userId)
@@ -409,35 +410,40 @@ def getListofDoctors(req):
             GeneralPhysicians = processLanguage(specialization1, language)
             for doctors in GeneralPhysicians:
                 docID = u'{}'.format(doctors.to_dict()['DocID'])
-                docName = str(i) + '👉' + u'{}'.format(doctors.to_dict()['Name']) + "\n" + "Doctor ID: " + docID + "\n"
+                # str(i) +
+                docName = '👉' + u'{}'.format(doctors.to_dict()['Name']) + "\n" + "Doctor ID: " + docID + "\n"
                 i = i + 1
                 result.append(docName)
         elif str(parameters.get('doctorspecialization')) == str('gynaecologist'):
             Gynaecologist = processLanguage(specialization, language)
             for doctors in Gynaecologist:
                 docID = u'{}'.format(doctors.to_dict()['DocID'])
-                docName = str(i) + '👉' + u'{}'.format(doctors.to_dict()['Name']) + "\n" + "Doctor ID: " + docID + "\n"
+                # str(i) +
+                docName = '👉' + u'{}'.format(doctors.to_dict()['Name']) + "\n" + "Doctor ID: " + docID + "\n"
                 i = i + 1
                 result.append(docName)
         elif str(parameters.get('doctorspecialization')) == str('ophthalmologist'):
             Ophthalmologist = processLanguage(specialization, language)
             for doctors in Ophthalmologist:
                 docID = u'{}'.format(doctors.to_dict()['DocID'])
-                docName = str(i) + '👉' + u'{}'.format(doctors.to_dict()['Name']) + "\n" + "Doctor ID: " + docID + "\n"
+                # str(i) +
+                docName = '👉' + u'{}'.format(doctors.to_dict()['Name']) + "\n" + "Doctor ID: " + docID + "\n"
                 i = i + 1
                 result.append(docName)
         elif str(parameters.get('doctorspecialization')) == str('cardiologist'):
             Cardiologist = processLanguage(specialization, language)
             for doctors in Cardiologist:
                 docID = u'{}'.format(doctors.to_dict()['DocID'])
-                docName = str(i) + '👉' + u'{}'.format(doctors.to_dict()['Name']) + "\n" + "Doctor ID: " + docID + "\n"
+                # str(i) +
+                docName = '👉' + u'{}'.format(doctors.to_dict()['Name']) + "\n" + "Doctor ID: " + docID + "\n"
                 i = i + 1
                 result.append(docName)
         elif str(parameters.get('doctorspecialization')) == str('pain'):
             pain = processLanguage(specialization, language)
             for doctors in pain:
                 docID = u'{}'.format(doctors.to_dict()['DocID'])
-                docName = str(i) + '👉' + u'{}'.format(doctors.to_dict()['Name']) + "\n" + "Doctor ID: " + docID + "\n"
+                # str(i) +
+                docName = '👉' + u'{}'.format(doctors.to_dict()['Name']) + "\n" + "Doctor ID: " + docID + "\n"
                 i = i + 1
                 result.append(docName)
         print(result)
@@ -462,9 +468,9 @@ def provideDoctorDetails(options, specialization):
 
     res = ""
     if info.exists:
-        name = "Name : " + u'{}'.format(info.to_dict()['Name'])
-        address = "Address : " + u'{}'.format(info.to_dict()['Address'])
-        phone = "Phone : " + u'{}'.format(info.to_dict()['Telephone'])
+        name = "🩺 Name : " + u'{}'.format(info.to_dict()['Name'])
+        address = "📌 Address : " + u'{}'.format(info.to_dict()['Address'])
+        phone = "📞 Phone : " + u'{}'.format(info.to_dict()['Telephone'])
         res = name + "\n" + address + "\n" + phone
     else:
         res = 'Please make sure to enter the correct Doctor ID'
