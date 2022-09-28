@@ -45,8 +45,8 @@ def saveConversations(query, result, session, userid, intent):
         'reply': result
     }
     print(userid)
-    sessionConvo = {'userID': userid}
-    doc_reff.set(sessionConvo)
+    # sessionConvo = {'userID': userid, 'sessionId': session}
+    # doc_reff.set(sessionConvo)
     intentConvo = doc_reff.collection('conversation').document(intent)
     intentConvo.set(user_conversation)
      # print(result)
@@ -63,18 +63,23 @@ def processRequest(req):
     result = query_response.get("fulfillmentText")
     session = query_response.get("outputContexts")[0].get("name").split("/")[-3]
 
-    if intent == 'finddoctors':
+    if intent == 'MedimateWelcomeIntent':
+        # print("HIiii")
+        saveConversations(query, result, session, userID[-1], intent)
+        res = result
+
+    elif intent == 'finddoctors':
         # print("HIiii")
         getDoctors, specout = getListofDoctors(req)
         specialization.append(specout)
-        saveConversations(query, result, session, userID[-1], intent)
+        saveConversations(query, req['queryResult']['parameters'].get('doctorspecialization'), session, userID[-1], intent)
         res = createResponse(getDoctors)
         # return res
 
     elif intent == 'doctorInfo':
-        doctorInfo = provideDoctorDetails(query, specialization)
+        doctorInfo, name = provideDoctorDetails(query, specialization)
         res = createResponse(doctorInfo)
-        saveConversations(query, result, session, userID[-1], intent)
+        saveConversations(query, name, session, userID[-1], intent)
 
         print(res)
         # return res
@@ -99,9 +104,9 @@ def processRequest(req):
     #     return res
 
     elif intent == 'getUserId':
-        print('in here')
+        # print('in here')
         res = existingUserDetail(req)
-        saveConversations(query, result, session, userID[-1], intent)
+        # saveConversations(query, result, session, userID[-1], intent)
         # res = createResponseForNewUser(existingUser)
         # return res
 
@@ -186,6 +191,29 @@ def createResponseForNewUser(fulfilment_text):
     }
     return fulfillmentMessages
 
+def createResponseForOldUser(fulfilment_text):
+    fulfillmentMessages = {
+        "fulfillmentMessages": [{
+            "text": {
+                "text": [
+                    fulfilment_text
+                ]
+            },
+            "platform": "TELEGRAM"
+        },
+            {
+                "quickReplies": {
+                    "title": "Please choose any option 👇",
+                    "quickReplies": [
+                        "Notes",
+                        "Services Menu"
+                    ]
+                },
+                "platform": "TELEGRAM"
+            }]
+    }
+    return fulfillmentMessages
+
 
 def createFollowUpResponse(fulfilment_text):
     serviceIntentCall = {
@@ -194,7 +222,7 @@ def createFollowUpResponse(fulfilment_text):
             "name": "ServiceEvent",
         }
     }
-    print(serviceIntentCall)
+    # print(serviceIntentCall)
     return serviceIntentCall
     # webhookresponse = fulfilment_text
     # return {
@@ -227,9 +255,9 @@ def newUserDetails(req, session):
     userEmail = req['queryResult']['parameters']['user_email']
     zipCode = req['queryResult']['parameters']['user_zipCode']
 
-    print(userID)
-    print(userName)
-    print(userEmail)
+    # print(userID)
+    # print(userName)
+    # print(userEmail)
 
     if checkUserExistenceByEmail(userEmail):
         userId = saveUserDetail(session, userEmail, userName, zipCode)
@@ -251,32 +279,35 @@ def newUserDetails(req, session):
 
 
 def saveUserDetail(session, userEmail, userName, zipCode):
+    global userID
     userIDsplit = userEmail.split("@")
     userId = userIDsplit[0] + "@"
     userID.append(userId)
+
     doc_ref = db.collection(u'Users').document(userId)
     my_data = {'UserName': userName, 'UserEmail': userEmail, 'userID': userId, 'userZipcode': zipCode}
-    doc_userhistory = db.collection(u'UserHistory').document(session)
-    my_userHistory = {'userID': userId}
-    print(my_data)
-    print(doc_userhistory)
-
-    doc_userhistory.set(my_userHistory)
     doc_ref.set(my_data)
+
+    # print(my_data)
+    # print(doc_userhistory)
+    doc_userhistory = db.collection(u'UserHistory').document(session)
+    my_userHistory = {'userID': userId, 'sessionId': session}
+    doc_userhistory.set(my_userHistory)
 
     return userId
 
 
 def checkUserExistenceByEmail(userEmail):
+
     user_doc_ref = db.collection(u'Users').where(u'UserEmail', u'==', userEmail).stream()
-    print("okayyyyyyyyyy")
+    # print("okayyyyyyyyyy")
     documents = [d for d in user_doc_ref]
     if len(documents):
         for document in documents:
-            print(u'Not empty')
+            # print(u'Not empty')
             return False
     else:
-        print(u'empty query')
+        # print(u'empty query')
         return True
 
 
@@ -285,39 +316,81 @@ def existingUserDetail(req):
     # print(userId)
 
     userName = checkUserExistence(userId)
-
+    userID.append(userId)
 
     if (userName == "") or (userName is None):
         message = "Looks like you are not registered with us yet \n Please write 'register' to save your details"
         res = createResponse(message)
     else:
-        message = "Welcome back " + str(userName)
-        fetchPreviousConversation(userId)
-        res = createResponseForNewUser(message)
-
+        message, doesConvoExist = fetchPreviousConversation(userId)
+        response = "Welcome back " + str(userName) + '. ' + message
+        if doesConvoExist:
+            res = createResponseForOldUser(response)
+        else:
+            res = createResponse(response)
     return res
 
 
 def fetchPreviousConversation(userId):
+    global session
+    message = ''
+    specialist = ''
+    docName = ''
     docs = db.collection('UserHistory').where('userID', '==', userId).stream()
-    for doc in docs:
-        user = doc.to_dict()
-        previous_convo = user['conversation']
-        # for convo in previous_convo:
-        #     if convo['intent' == 'finddoctors']:
-        #         previousReply = convo['reply']
+    documents = [d for d in docs]
+    if len(documents):
+        for doc in documents:
+            user = doc.to_dict()
+            # print("session", user)
+            session = user['sessionId']
+        collections = db.collection('UserHistory').document(session).collections()
+        for collection in collections:
+            for doc in collection.stream():
+                print(f'{doc.id} => {doc.to_dict()}')
+                if doc.id == 'finddoctors':
+                    specialist = doc.to_dict()['reply']
+                    # message += 'Looks like, you were looking for a ' + doc.to_dict()['reply'] + '. \n'
+                    # print(message)
+                if doc.id == 'doctorInfo':
+                    docName = doc.to_dict()['reply']
+                    # message += 'I hope your appointment went well with ' + doc.to_dict()['reply'] + \
+                    #           '.\n Do you want me to create a note about the appointment?'
+                    # print(message)
+            return '\n Looks like, you were looking for a ' + specialist + '. \n I hope your appointment went well with ' + docName + \
+                              '.\n Do you want me to create a note about the appointment?', True
+    else:
+        # print(u'empty query')
+        return "", False
 
-        print(user_name)
+    # if docs is not None:
 
+    # else:
+    #     message = ''
+
+        #
+        # user = doc.to_dict()
+        # print(user)
+        # previous_convo = user['conversation']
+        # # for convo in previous_convo:
+        # #     if convo['intent' == 'finddoctors']:
+        # #         previousReply = convo['reply']
+        #
+        # # print(user_name)
 
 def checkUserExistence(userId):
     docs = db.collection('Users').where('userID', '==', userId).stream()
-    for doc in docs:
-        user = doc.to_dict()
-        user_name = user['UserName']
-        print(user_name)
+    documents = [d for d in docs]
+    if len(documents):
+        for doc in documents:
+            user = doc.to_dict()
+            user_name = user['UserName']
+            print(user_name)
 
-        return user_name
+            return user_name
+    else:
+        # print(u'empty query')
+        return ""
+
 
 
 def getListofDoctors(req):
@@ -398,7 +471,7 @@ def provideDoctorDetails(options, specialization):
 
     print(res)
 
-    return res
+    return res, name
 
 
 def processLanguage(specialization, language):
