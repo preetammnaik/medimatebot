@@ -18,6 +18,9 @@ userID = ['test']
 app = Flask(__name__)
 
 specialization = []
+docID = []
+checkListDocID = []
+
 
 
 @app.route('/')
@@ -70,15 +73,17 @@ def processRequest(req):
 
     elif intent == 'finddoctors':
         # print("HIiii")
-        getDoctors, specout = getListofDoctors(req)
+        getDoctors, specout , docNo = getListofDoctors(req)
         specialization.append(specout)
+        checkListDocID.append(docNo)
         saveConversations(query, req['queryResult']['parameters'].get('doctorspecialization'), session, userID[-1],
                           intent)
         res = createResponse(getDoctors)
         # return res
 
     elif intent == 'doctorInfo':
-        doctorInfo, name = provideDoctorDetails(query, specialization)
+        docID.append(query)
+        doctorInfo, name = provideDoctorDetails(query, specialization,checkListDocID)
         res = createResponse(doctorInfo)
         saveConversations(query, name, session, userID[-1], intent)
 
@@ -111,17 +116,22 @@ def processRequest(req):
         # res = createResponseForNewUser(existingUser)
         # return res
 
-    elif intent == 'pharmacy':
+    elif intent == 'pharmacyEmergency':
         pharmacyDetail = providePharmacyDetails(req)
         res = createResponse(pharmacyDetail)
         saveConversations(query, result, session, userID[-1], intent)
         print(res)
         # return res
 
-    elif intent == 'emergency':
+    elif intent == 'emergencyInfo':
         emergencyDetail = provideEmergencyDetails(req)
         res = createResponse(emergencyDetail)
         saveConversations(query, result, session, userID[-1], intent)
+        print(res)
+
+    elif intent == 'navigationalRoutes':
+        navigationDetails = provideNavigationRoutes(docID, specialization)
+        res = createResponse(navigationDetails)
         print(res)
 
     elif intent == 'exitConversation':
@@ -399,6 +409,7 @@ def checkUserExistence(userId):
 def getListofDoctors(req):
     result = ["Here is the list of doctors to choose from: "]
     i = 1
+    doctorID =[]
 
     parameters = req['queryResult']['parameters']
     # print('Dialogflow parameters:')
@@ -412,6 +423,7 @@ def getListofDoctors(req):
             GeneralPhysicians = processLanguage(specialization1, language)
             for doctors in GeneralPhysicians:
                 docID = u'{}'.format(doctors.to_dict()['DocID'])
+                doctorID.append(str(docID))
                 # str(i) +
                 docName = '👉' + u'{}'.format(doctors.to_dict()['Name']) + "\n" + "Doctor ID: " + docID + "\n"
                 i = i + 1
@@ -420,6 +432,7 @@ def getListofDoctors(req):
             Gynaecologist = processLanguage(specialization, language)
             for doctors in Gynaecologist:
                 docID = u'{}'.format(doctors.to_dict()['DocID'])
+                doctorID.append(str(docID))
                 # str(i) +
                 docName = '👉' + u'{}'.format(doctors.to_dict()['Name']) + "\n" + "Doctor ID: " + docID + "\n"
                 i = i + 1
@@ -428,6 +441,7 @@ def getListofDoctors(req):
             Ophthalmologist = processLanguage(specialization, language)
             for doctors in Ophthalmologist:
                 docID = u'{}'.format(doctors.to_dict()['DocID'])
+                doctorID.append(str(docID))
                 # str(i) +
                 docName = '👉' + u'{}'.format(doctors.to_dict()['Name']) + "\n" + "Doctor ID: " + docID + "\n"
                 i = i + 1
@@ -436,6 +450,7 @@ def getListofDoctors(req):
             Cardiologist = processLanguage(specialization, language)
             for doctors in Cardiologist:
                 docID = u'{}'.format(doctors.to_dict()['DocID'])
+                doctorID.append(str(docID))
                 # str(i) +
                 docName = '👉' + u'{}'.format(doctors.to_dict()['Name']) + "\n" + "Doctor ID: " + docID + "\n"
                 i = i + 1
@@ -444,40 +459,49 @@ def getListofDoctors(req):
             pain = processLanguage(specialization, language)
             for doctors in pain:
                 docID = u'{}'.format(doctors.to_dict()['DocID'])
+                doctorID.append(str(docID))
                 # str(i) +
                 docName = '👉' + u'{}'.format(doctors.to_dict()['Name']) + "\n" + "Doctor ID: " + docID + "\n"
                 i = i + 1
                 result.append(docName)
         print(result)
-        res = "\r\n".join(x for x in result) + "\n" + 'Please enter the ID of a doctor for more info:)'
+        if len(result)==1:
+            res = "Unfortunately, there are no doctors with your requirement. Please try again with a different language of communication. "
+        else:
+            res = "\r\n".join(x for x in result) + "\n" + 'Please enter the ID of a doctor for more info:)'
         print(res)
 
-        return res, specialization
+        return res, specialization,doctorID
 
 
-def provideDoctorDetails(options, specialization):
+def provideDoctorDetails(options, specialization,checkListofDocs):
+
     options = options.upper()
-    print(options)
-    if specialization[-1] != "general physician":
-        Specialization = specialization[-1].capitalize()
+    if options in checkListofDocs[0]:
+        if specialization[-1] != "general physician":
+            Specialization = specialization[-1].capitalize()
+
+        else:
+            Specialization = "GeneralPhysician"
+
+        detailedInfo = db.collection(Specialization).document(options)
+        info = detailedInfo.get()
+        print(info)
+
+        res = ""
+        if info.exists:
+            name = "🩺 Name : " + u'{}'.format(info.to_dict()['Name'])
+            address = "📌 Address : " + u'{}'.format(info.to_dict()['Address'])
+            phone = "📞 Phone : " + u'{}'.format(info.to_dict()['Telephone'])
+            res = name + "\n" + address + "\n" + phone
+        else:
+            res = 'Please make sure to enter the correct Doctor ID'
+
+        print(res)
 
     else:
-        Specialization = "GeneralPhysician"
-
-    detailedInfo = db.collection(Specialization).document(options)
-    info = detailedInfo.get()
-    print(info)
-
-    res = ""
-    if info.exists:
-        name = "🩺 Name : " + u'{}'.format(info.to_dict()['Name'])
-        address = "📌 Address : " + u'{}'.format(info.to_dict()['Address'])
-        phone = "📞 Phone : " + u'{}'.format(info.to_dict()['Telephone'])
-        res = name + "\n" + address + "\n" + phone
-    else:
-        res = 'Please make sure to enter the correct Doctor ID'
-
-    print(res)
+        res = "The Doctor ID may be valid but does not meet your language requirements."
+        name = "The Doctor ID may be valid but does not meet your language requirements."
 
     return res, name
 
@@ -493,12 +517,72 @@ def processLanguage(specialization, language):
 
 
 def provideEmergencyDetails(req):
-    pass
+    emergencyDetails = "Here is a list of Emergency numbers : "+"\n"
+    emergency = db.collection(u'Emergency').get()
+    print(emergency)
+    i = 1
+    for emergencyInfo in emergency:
+        name =  "🩺 Name : " + "0"+str(i)+ " : "+ u'{}'.format(emergencyInfo.to_dict()['Name'])
+        address = "📌 Address "+ "0"+str(i)+ " : " + u'{}'.format(emergencyInfo.to_dict()['Address'])
+        phone = "📞 Phone " +"0"+ str(i)+ " : " + u'{}'.format(emergencyInfo.to_dict()['Telephone'])
+        emergencyDetails += name+"\n"+ address + "\n" + phone +"\n"
+        i=i+1
+
+    print(emergencyDetails)
+    return emergencyDetails
+
+
 
 
 def providePharmacyDetails(req):
-    pass
+    pharmacyDetails = "Here is a list of Pharmacy Emergency numbers : "+"\n"
+    pharmacy = db.collection(u'Pharmacy').get()
+    i = 1
+    for pharmacyInfo in pharmacy:
+        address = "📌 Address" + str(i) + " : " + u'{}'.format(pharmacyInfo.to_dict()['Address'])
+        phone = "📞 Phone" + str(i) + " : " + u'{}'.format(pharmacyInfo.to_dict()['Phone'])
+        pharmacyDetails += address + "\n" + phone + "\n"
+
+    print(pharmacyDetails)
+    return pharmacyDetails
+
+def provideNavigationRoutes(docID,specialization):
+    doctorID = docID[-1].upper()
+    if (specialization[-1] != "general physician"):
+        Specialization = specialization[-1].capitalize()
+
+    else:
+        Specialization = "GeneralPhysician"
+
+    detailedInfo = db.collection(Specialization).document(doctorID)
+    info = detailedInfo.get()
+    if info.exists:
+        navigation = "Routes : " + u'{}'.format(info.to_dict()['Navigation'])
+    else:
+        navigation = 'Unfortunately, the routes are not available for this Doctor ID. '
+
+    print(navigation)
+    return navigation
+
+def provideOperationalHours(docID,specialization):
+    doctorID = docID[-1].upper()
+    if (specialization[-1] != "general physician"):
+        Specialization = specialization[-1].capitalize()
+
+    else:
+        Specialization = "GeneralPhysician"
+
+    detailedInfo = db.collection(Specialization).document(doctorID)
+    info = detailedInfo.get()
+    if info.exists:
+        OperationalHours = "Operational Hours : " + u'{}'.format(info.to_dict()['OperationalHours'])
+    else:
+        OperationalHours = 'Unfortunately, the working timings are not available for this Doctor ID. '
+
+    print(OperationalHours)
+    return OperationalHours
+
 
 
 if __name__ == "__main__":
-    app.run(debug=True, port=5001)
+    app.run(debug=True, port=5002)
