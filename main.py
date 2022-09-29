@@ -49,7 +49,7 @@ def saveConversations(query, result, session, userid, intent):
     # doc_reff.set(sessionConvo)
     intentConvo = doc_reff.collection('conversation').document(intent)
     intentConvo.set(user_conversation)
-     # print(result)
+    # print(result)
     # print(session)
 
 
@@ -58,7 +58,7 @@ def processRequest(req):
     query_response = req.get("queryResult")
     intent = query_response.get("intent").get("displayName")
     # print(query_response)
-    res =''
+    res = ''
     query = query_response.get('queryText')
     result = query_response.get("fulfillmentText")
     session = query_response.get("outputContexts")[0].get("name").split("/")[-3]
@@ -72,7 +72,8 @@ def processRequest(req):
         # print("HIiii")
         getDoctors, specout = getListofDoctors(req)
         specialization.append(specout)
-        saveConversations(query, req['queryResult']['parameters'].get('doctorspecialization'), session, userID[-1], intent)
+        saveConversations(query, req['queryResult']['parameters'].get('doctorspecialization'), session, userID[-1],
+                          intent)
         res = createResponse(getDoctors)
         # return res
 
@@ -123,12 +124,13 @@ def processRequest(req):
         saveConversations(query, result, session, userID[-1], intent)
         print(res)
 
+    elif intent == 'exitConversation':
+        res = createFollowUpResponse("Exit", "Welcome")
 
     # elif intent == 'languagespecification':
     #     doctorName = filterLanguageSpoken(text, specialization)
     #     res = get_data(doctorName)
     #     return res
-
 
     return res
 
@@ -191,6 +193,7 @@ def createResponseForNewUser(fulfilment_text):
     }
     return fulfillmentMessages
 
+
 def createResponseForOldUser(fulfilment_text):
     fulfillmentMessages = {
         "fulfillmentMessages": [{
@@ -215,11 +218,11 @@ def createResponseForOldUser(fulfilment_text):
     return fulfillmentMessages
 
 
-def createFollowUpResponse(fulfilment_text):
+def createFollowUpResponse(fulfilment_text, Event):
     serviceIntentCall = {
         "fulfillmentText": fulfilment_text,
         "followupEventInput": {
-            "name": "ServiceEvent",
+            "name": Event,
         }
     }
     # print(serviceIntentCall)
@@ -298,7 +301,6 @@ def saveUserDetail(session, userEmail, userName, zipCode):
 
 
 def checkUserExistenceByEmail(userEmail):
-
     user_doc_ref = db.collection(u'Users').where(u'UserEmail', u'==', userEmail).stream()
     # print("okayyyyyyyyyy")
     documents = [d for d in user_doc_ref]
@@ -358,7 +360,7 @@ def fetchPreviousConversation(userId):
                     #           '.\n Do you want me to create a note about the appointment?'
                     # print(message)
             return '\n Looks like, you were looking for a ' + specialist + '. \n I hope your appointment went well with ' + docName + \
-                              '.\n Do you want me to create a note about the appointment?', True
+                   '.\n Do you want me to create a note about the appointment?', True
     else:
         # print(u'empty query')
         return "", False
@@ -368,15 +370,16 @@ def fetchPreviousConversation(userId):
     # else:
     #     message = ''
 
-        #
-        # user = doc.to_dict()
-        # print(user)
-        # previous_convo = user['conversation']
-        # # for convo in previous_convo:
-        # #     if convo['intent' == 'finddoctors']:
-        # #         previousReply = convo['reply']
-        #
-        # # print(user_name)
+    #
+    # user = doc.to_dict()
+    # print(user)
+    # previous_convo = user['conversation']
+    # # for convo in previous_convo:
+    # #     if convo['intent' == 'finddoctors']:
+    # #         previousReply = convo['reply']
+    #
+    # # print(user_name)
+
 
 def checkUserExistence(userId):
     docs = db.collection('Users').where('userID', '==', userId).stream()
@@ -391,7 +394,6 @@ def checkUserExistence(userId):
     else:
         # print(u'empty query')
         return ""
-
 
 
 def getListofDoctors(req):
@@ -499,4 +501,4 @@ def providePharmacyDetails(req):
 
 
 if __name__ == "__main__":
-    app.run(debug=True, port=5000)
+    app.run(debug=True, port=5001)
