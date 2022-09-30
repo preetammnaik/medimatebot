@@ -95,7 +95,7 @@ def processRequest(req):
         saveConversations(query, result, session, userID[-1], intent)
         # saveConversations(query, result, session, userID[-1])
         print("i am coming till here :p")
-        # res = createResponseForNewUser(newUser)
+        # res = createCommonResponse(newUser)
         print(res)
         # return res
 
@@ -113,7 +113,7 @@ def processRequest(req):
         # print('in here')
         res = existingUserDetail(req)
         # saveConversations(query, result, session, userID[-1], intent)
-        # res = createResponseForNewUser(existingUser)
+        # res = createCommonResponse(existingUser)
         # return res
 
     elif intent == 'pharmacyEmergency':
@@ -179,7 +179,7 @@ def createResponse(fulfilment_text):
     #
 
 
-def createResponseForNewUser(fulfilment_text):
+def createCommonResponse(fulfilment_text, quickReplies):
     fulfillmentMessages = {
         "fulfillmentMessages": [{
             "text": {
@@ -192,11 +192,7 @@ def createResponseForNewUser(fulfilment_text):
             {
                 "quickReplies": {
                     "title": "Please choose any option 👇",
-                    "quickReplies": [
-                        "Find Doctor",
-                        "Emergency Room Contact",
-                        "Pharmacy Contact"
-                    ]
+                    "quickReplies": quickReplies
                 },
                 "platform": "TELEGRAM"
             }]
@@ -204,28 +200,28 @@ def createResponseForNewUser(fulfilment_text):
     return fulfillmentMessages
 
 
-def createResponseForOldUser(fulfilment_text):
-    fulfillmentMessages = {
-        "fulfillmentMessages": [{
-            "text": {
-                "text": [
-                    fulfilment_text
-                ]
-            },
-            "platform": "TELEGRAM"
-        },
-            {
-                "quickReplies": {
-                    "title": "Please choose any option 👇",
-                    "quickReplies": [
-                        "Notes",
-                        "Go to services menu"
-                    ]
-                },
-                "platform": "TELEGRAM"
-            }]
-    }
-    return fulfillmentMessages
+# def createResponseForOldUser(fulfilment_text):
+#     fulfillmentMessages = {
+#         "fulfillmentMessages": [{
+#             "text": {
+#                 "text": [
+#                     fulfilment_text
+#                 ]
+#             },
+#             "platform": "TELEGRAM"
+#         },
+#             {
+#                 "quickReplies": {
+#                     "title": "Please choose any option 👇",
+#                     "quickReplies": [
+#                         "Notes",
+#                         "Go to services menu"
+#                     ]
+#                 },
+#                 "platform": "TELEGRAM"
+#             }]
+#     }
+#     return fulfillmentMessages
 
 
 def createFollowUpResponse(fulfilment_text, Event):
@@ -275,7 +271,12 @@ def newUserDetails(req, session):
     if checkUserExistenceByEmail(userEmail):
         userId = saveUserDetail(session, userEmail, userName, zipCode)
         message = "Hello, " + userName + " welcome to MediMate. Your userID is : " + userId
-        res = createResponseForNewUser(message)
+        quickReplies = [
+            "Find Doctor",
+            "Emergency Room Contact",
+            "Pharmacy Contact"
+        ]
+        res = createCommonResponse(message, quickReplies)
     else:
         message = 'Looks like this email id is already registered with us, please try a different email Id'
         res = createResponse(message)
@@ -338,7 +339,11 @@ def existingUserDetail(req):
         message, doesConvoExist = fetchPreviousConversation(userId)
         response = "Welcome back " + str(userName) + '. ' + message
         if doesConvoExist:
-            res = createResponseForOldUser(response)
+            quickReplies = [
+                "Notes",
+                "Go to services menu"
+            ]
+            res = createCommonResponse(response, quickReplies)
         else:
             res = createResponse(response)
     return res
