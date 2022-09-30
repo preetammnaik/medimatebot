@@ -84,7 +84,9 @@ def processRequest(req):
     elif intent == 'doctorInfo':
         docID.append(query)
         doctorInfo, name = provideDoctorDetails(query, specialization,checkListDocID)
-        res = createResponse(doctorInfo)
+
+        res = createResponseForAdditionalInfo(doctorInfo)
+        #res = createFollowUpResponse(doctorInfo,"additionalinfo")
         saveConversations(query, name, session, userID[-1], intent)
 
         print(res)
@@ -131,16 +133,14 @@ def processRequest(req):
 
     elif intent == 'navigationalRoutes':
         navigationDetails = provideNavigationRoutes(docID, specialization)
-        res = createResponse(navigationDetails)
+        res = createResponseForNavigationalInfo(navigationDetails)
         print(res)
+
+
 
     elif intent == 'exitConversation':
         res = createFollowUpResponse("Exit", "Welcome")
 
-    # elif intent == 'languagespecification':
-    #     doctorName = filterLanguageSpoken(text, specialization)
-    #     res = get_data(doctorName)
-    #     return res
 
     return res
 
@@ -258,6 +258,52 @@ def createFollowUpResponse(fulfilment_text, Event):
     #     ]
     # }
 
+def createResponseForAdditionalInfo(fulfilment_text):
+    fulfillmentMessages = {
+        "fulfillmentMessages": [{
+            "text": {
+                "text": [
+                    fulfilment_text
+                ]
+            },
+            "platform": "TELEGRAM"
+        },
+            {
+                "quickReplies": {
+                    "title": "If you need any additional information, please choose one of the options 👇",
+                    "quickReplies": [
+                        "Operational Hours",
+                        "Navigational Routes",
+                        "I am not interested"
+                    ]
+                },
+                "platform": "TELEGRAM"
+            }]
+    }
+    return fulfillmentMessages
+
+def createResponseForNavigationalInfo(fulfilment_text):
+    fulfillmentMessages = {
+        "fulfillmentMessages": [{
+            "text": {
+                "text": [
+                    fulfilment_text
+                ]
+            },
+            "platform": "TELEGRAM"
+        },
+            {
+                "quickReplies": {
+                    "title": "If you need any additional information, please choose one of the options 👇",
+                    "quickReplies": [
+                        "Operational Hours",
+                        "Exit"
+                    ]
+                },
+                "platform": "TELEGRAM"
+            }]
+    }
+    return fulfillmentMessages
 
 def newUserDetails(req, session):
     userName = req['queryResult']['parameters']['user_name']
@@ -553,6 +599,8 @@ def providePharmacyDetails(req):
 
 def provideNavigationRoutes(docID,specialization):
     doctorID = docID[-1].upper()
+    route =""
+
     if (specialization[-1] != "general physician"):
         Specialization = specialization[-1].capitalize()
 
@@ -562,12 +610,21 @@ def provideNavigationRoutes(docID,specialization):
     detailedInfo = db.collection(Specialization).document(doctorID)
     info = detailedInfo.get()
     if info.exists:
-        navigation = "Routes : " + u'{}'.format(info.to_dict()['Navigation'])
+        navigation =  u'{}'.format(info.to_dict()['Navigation'])
+        navigation = navigation.replace("[","")
+        navigation = navigation.replace("]", "")
+        delim = navigation.split(",")
+        i=1
+        for routes in delim:
+            route += str(i) + "." + routes + "\n"
+            i += 1
     else:
-        navigation = 'Unfortunately, the routes are not available for this Doctor ID. '
+        route = 'Unfortunately, the routes are not available for this Doctor ID. '
 
-    print(navigation)
-    return navigation
+
+
+    print(route)
+    return route
 
 def provideOperationalHours(docID,specialization):
     doctorID = docID[-1].upper()
