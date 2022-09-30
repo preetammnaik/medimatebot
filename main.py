@@ -85,7 +85,23 @@ def processRequest(req):
         docID.append(query)
         doctorInfo, name = provideDoctorDetails(query, specialization,checkListDocID)
 
-        res = createResponseForAdditionalInfo(doctorInfo)
+        if (name == "INVALID"):
+            quickReplies = [
+                "Go back to Find Doctor",
+                "Exit"
+            ]
+        else:
+            quickReplies = [
+                "Operational Hours",
+                "Navigational Hours",
+                "Exit"
+            ]
+
+        res = createResponseForAdditionalInfo(doctorInfo,quickReplies)
+
+
+
+
         #res = createFollowUpResponse(doctorInfo,"additionalinfo")
         saveConversations(query, name, session, userID[-1], intent)
 
@@ -263,7 +279,7 @@ def createFollowUpResponse(fulfilment_text, Event):
     #     ]
     # }
 
-def createResponseForAdditionalInfo(fulfilment_text):
+def createResponseForAdditionalInfo(fulfilment_text,quickReplies):
     fulfillmentMessages = {
         "fulfillmentMessages": [{
             "text": {
@@ -276,11 +292,7 @@ def createResponseForAdditionalInfo(fulfilment_text):
             {
                 "quickReplies": {
                     "title": "If you need any additional information, please choose one of the options 👇",
-                    "quickReplies": [
-                        "Operational Hours",
-                        "Navigational Routes",
-                        "No, Exit"
-                    ]
+                    "quickReplies": quickReplies
                 },
                 "platform": "TELEGRAM"
             }]
@@ -580,7 +592,7 @@ def provideDoctorDetails(options, specialization,checkListofDocs):
 
     else:
         res = "The Doctor ID may be valid but does not meet your language requirements."
-        name = "The Doctor ID may be valid but does not meet your language requirements."
+        name = "INVALID"
 
     return res, name
 
