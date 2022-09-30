@@ -136,6 +136,11 @@ def processRequest(req):
         res = createResponseForNavigationalInfo(navigationDetails)
         print(res)
 
+    elif intent == 'operationalHours':
+        operationalDetails = provideOperationalHours(docID, specialization)
+        res = createResponseForOpHoursInfo(operationalDetails)
+        print(res)
+
 
 
     elif intent == 'exitConversation':
@@ -274,7 +279,7 @@ def createResponseForAdditionalInfo(fulfilment_text):
                     "quickReplies": [
                         "Operational Hours",
                         "Navigational Routes",
-                        "I am not interested"
+                        "No, Exit"
                     ]
                 },
                 "platform": "TELEGRAM"
@@ -297,6 +302,29 @@ def createResponseForNavigationalInfo(fulfilment_text):
                     "title": "If you need any additional information, please choose one of the options 👇",
                     "quickReplies": [
                         "Operational Hours",
+                        "Exit"
+                    ]
+                },
+                "platform": "TELEGRAM"
+            }]
+    }
+    return fulfillmentMessages
+
+def createResponseForOpHoursInfo(fulfilment_text):
+    fulfillmentMessages = {
+        "fulfillmentMessages": [{
+            "text": {
+                "text": [
+                    fulfilment_text
+                ]
+            },
+            "platform": "TELEGRAM"
+        },
+            {
+                "quickReplies": {
+                    "title": "If you need any additional information, please choose one of the options 👇",
+                    "quickReplies": [
+                        "Navigational Routes",
                         "Exit"
                     ]
                 },
@@ -628,6 +656,7 @@ def provideNavigationRoutes(docID,specialization):
 
 def provideOperationalHours(docID,specialization):
     doctorID = docID[-1].upper()
+    hours=""
     if (specialization[-1] != "general physician"):
         Specialization = specialization[-1].capitalize()
 
@@ -637,12 +666,19 @@ def provideOperationalHours(docID,specialization):
     detailedInfo = db.collection(Specialization).document(doctorID)
     info = detailedInfo.get()
     if info.exists:
-        OperationalHours = "Operational Hours : " + u'{}'.format(info.to_dict()['OperationalHours'])
+        OperationalHours = u'{}'.format(info.to_dict()['OperationalHours'])
+        OperationalHours = OperationalHours.replace("{", "")
+        OperationalHours = OperationalHours.replace("}", "")
+        delim = OperationalHours.split(",")
+        i = 1
+        for opHrs in delim:
+            hours += str(i) + "." + opHrs + "\n"
+            i += 1
     else:
         OperationalHours = 'Unfortunately, the working timings are not available for this Doctor ID. '
 
-    print(OperationalHours)
-    return OperationalHours
+    print(hours)
+    return hours
 
 
 
