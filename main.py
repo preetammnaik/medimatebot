@@ -167,31 +167,27 @@ def createResponse(fulfilment_text):
     #
 
 
-def createResponseForNewUser(fulfilment_text):
-    fulfillmentMessages = {
-        "fulfillmentMessages": [{
-            "text": {
-                "text": [
-                    fulfilment_text
-                ]
-            },
-            "platform": "TELEGRAM"
-        },
-            {
-                "quickReplies": {
-                    "title": "Please choose any option 👇",
-                    "quickReplies": [
-                        "Find Doctor",
-                        "Emergency Room Contact",
-                        "Pharmacy Contact"
-                    ]
-                },
-                "platform": "TELEGRAM"
-            }]
-    }
-    return fulfillmentMessages
+# def createResponseForNewUser(fulfilment_text, quickReplies):
+#     fulfillmentMessages = {
+#         "fulfillmentMessages": [{
+#             "text": {
+#                 "text": [
+#                     fulfilment_text
+#                 ]
+#             },
+#             "platform": "TELEGRAM"
+#         },
+#             {
+#                 "quickReplies": {
+#                     "title": "Please choose any option 👇",
+#                     "quickReplies": quickReplies
+#                 },
+#                 "platform": "TELEGRAM"
+#             }]
+#     }
+#     return fulfillmentMessages
 
-def createResponseForOldUser(fulfilment_text):
+def createCommonResponse(fulfilment_text, quickReplies):
     fulfillmentMessages = {
         "fulfillmentMessages": [{
             "text": {
@@ -204,10 +200,7 @@ def createResponseForOldUser(fulfilment_text):
             {
                 "quickReplies": {
                     "title": "Please choose any option 👇",
-                    "quickReplies": [
-                        "Notes",
-                        "Go to services menu"
-                    ]
+                    "quickReplies": quickReplies
                 },
                 "platform": "TELEGRAM"
             }]
@@ -262,7 +255,12 @@ def newUserDetails(req, session):
     if checkUserExistenceByEmail(userEmail):
         userId = saveUserDetail(session, userEmail, userName, zipCode)
         message = "Hello, " + userName + " welcome to MediMate. Your userID is : " + userId
-        res = createResponseForNewUser(message)
+        quickReplies = [
+            "Find Doctor",
+            "Emergency Room Contact",
+            "Pharmacy Contact"
+        ]
+        res = createCommonResponse(message, quickReplies)
     else:
         message = 'Looks like this email id is already registered with us, please try a different email Id'
         res = createResponse(message)
@@ -326,7 +324,11 @@ def existingUserDetail(req):
         message, doesConvoExist = fetchPreviousConversation(userId)
         response = "Welcome back " + str(userName) + '. ' + message
         if doesConvoExist:
-            res = createResponseForOldUser(response)
+            quickReplies= [
+                "Notes",
+                "Go to services menu"
+            ]
+            res = createCommonResponse(response)
         else:
             res = createResponse(response)
     return res
@@ -468,9 +470,9 @@ def provideDoctorDetails(options, specialization):
 
     res = ""
     if info.exists:
-        name = "🩺 Name : " + u'{}'.format(info.to_dict()['Name'])
+        name = "🩺‍ Name : " + u'{}'.format(info.to_dict()['Name'])
         address = "📌 Address : " + u'{}'.format(info.to_dict()['Address'])
-        phone = "📞 Phone : " + u'{}'.format(info.to_dict()['Telephone'])
+        phone = "☎️ Phone : " + u'{}'.format(info.to_dict()['Telephone'])
         res = name + "\n" + address + "\n" + phone
     else:
         res = 'Please make sure to enter the correct Doctor ID'
