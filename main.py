@@ -136,14 +136,24 @@ def processRequest(req):
 
     elif intent == 'pharmacyEmergency':
         pharmacyDetail = providePharmacyDetails(req)
-        res = createResponse(pharmacyDetail)
+        quickReplies = [
+            "Find Doctor",
+            "Emergency Information",
+            "Exit"
+        ]
+        res = createCommonResponse(pharmacyDetail,quickReplies)
         saveConversations(query, result, session, userID[-1], intent)
         print(res)
         # return res
 
     elif intent == 'emergencyInfo':
         emergencyDetail = provideEmergencyDetails(req)
-        res = createResponse(emergencyDetail)
+        quickReplies = [
+            "Find Doctor",
+            "Pharmacy Emergency",
+            "Exit"
+        ]
+        res = createCommonResponse(emergencyDetail,quickReplies)
         saveConversations(query, result, session, userID[-1], intent)
         print(res)
 
