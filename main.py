@@ -698,7 +698,7 @@ def provideOperationalHours(docID,specialization):
             i += 1
     else:
         OperationalHours = 'Unfortunately, the working timings are not available for this Doctor ID. '
-##pleasework
+##pleaseworknow
     print(hours)
     return hours
 
