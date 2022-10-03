@@ -20,7 +20,7 @@ app = Flask(__name__)
 specialization = []
 docID = []
 checkListDocID = []
-
+intentList = []
 intentQueryList = []
 
 
@@ -61,6 +61,9 @@ def processRequest(req):
     print(userID)
     query_response = req.get("queryResult")
     intent = query_response.get("intent").get("displayName")
+    intentList.append(intent)
+    print("The intent list is below")
+    print(intentList)
     # print(query_response)
     res = ''
     query = query_response.get('queryText')
@@ -168,16 +171,20 @@ def processRequest(req):
     elif intent == 'fallback':
         if len(intentQueryList) == 0:
             res = createResponse("Please say Hi or Hello to start your conversation with MediMate Bot")
-        elif len(intentQueryList) == 1:
+            intentQueryList.pop()
+        elif len(intentQueryList) >= 1:
             res = intentQueryList[-1]
-        elif len(intentQueryList) > 1:
-            res = intentQueryList[-2]
+            intentQueryList.pop()
+
 
     elif intent == 'exitConversation':
         res = createFollowUpResponse("Exit", "Welcome")
 
     print(res)
+    print("the query response is stored below")
     intentQueryList.append(res)
+    print(intentList)
+    print(intentQueryList)
     return res
 
 
@@ -710,4 +717,4 @@ def provideOperationalHours(docID, specialization):
 
 
 if __name__ == "__main__":
-    app.run(debug=True, port=5001)
+    app.run(debug=True, port=5004)
