@@ -177,8 +177,6 @@ def processRequest(req):
             intentQueryList.pop()
 
 
-    elif intent == 'exitConversation':
-        res = createFollowUpResponse("Exit", "Welcome")
 
     print(res)
     print("the query response is stored below")
