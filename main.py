@@ -177,7 +177,7 @@ def processRequest(req):
             intentQueryList.pop()
 
     elif intent == 'exitConversation':
-        res = createResponse("Thankyou for using Medimate :)")
+        res = createCommonResponse("Thankyou for using Medimate :)","")
 
 
 
