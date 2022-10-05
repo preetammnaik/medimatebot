@@ -107,7 +107,33 @@ def processRequest(req):
         saveConversations(query, name, session, userID[-1], intent)
 
         print(res)
-        # return res
+
+    elif intent == "doctorNumber":
+        #print(checkListDocID[0])
+        doctorInfo,name,doctorID = provideDocDetailNumber(query,specialization,checkListDocID)
+        if(doctorID!=0):
+            docID.append(doctorID)
+            quickReplies = [
+                "Operational Hours",
+                "Navigational Hours",
+                "Exit"
+            ]
+
+            saveConversations(query, name, session, userID[-1], intent)
+
+            print(res)
+        else:
+            quickReplies = [
+                "Go back to Find Doctor",
+                "Exit"
+            ]
+        res = createResponseForAdditionalInfo(doctorInfo, quickReplies)
+
+
+
+
+
+
 
     elif intent == 'New User - yes':
         res = newUserDetails(req, session)
@@ -176,8 +202,10 @@ def processRequest(req):
             res = intentQueryList[-1]
             intentQueryList.pop()
 
+
+
     elif intent == 'exitConversation':
-        res = createCommonResponse("Thankyou for using Medimate :)","")
+        res = createResponse("Thankyou for using Medimate :)")
 
 
 
@@ -715,6 +743,25 @@ def provideOperationalHours(docID, specialization):
     ##pleaseworknowpppppsssss
     print(hours)
     return hours
+
+def provideDocDetailNumber(number, specialization, checkListDocID):
+    number = int(number)
+    print(number)
+    print(len(checkListDocID[0]))
+    if(number<len(checkListDocID[0]) and  number != 0):
+        doctorInfo, name = provideDoctorDetails(checkListDocID[0][number-1],specialization,checkListDocID)
+        doctorID = checkListDocID[0][number-1]
+    else:
+        doctorInfo = "The number you have chosen is INVALID"
+        name = "INVALID"
+        doctorID = 0
+
+    return doctorInfo,name,doctorID
+
+
+
+
+
 
 
 if __name__ == "__main__":
