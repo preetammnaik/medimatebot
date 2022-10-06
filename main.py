@@ -21,7 +21,19 @@ specialization = []
 docID = []
 checkListDocID = []
 intentList = []
-intentQueryList = []
+intentqList = []
+MedimateWelcomeIntent = {
+    "fulfillmentText": "Sorry,what was that? \n But you can always choose from the options below that i can help you with"}
+NewUseryes = {'fulfillmentMessages': [
+    {'text': {'text': ['I did not get that. Could you try that again']}, 'platform': 'TELEGRAM'}, {
+        'quickReplies': {'title': 'Please choose from these option 👇',
+                         'quickReplies': ['Find Doctor', 'Emergency Room Contact', 'Pharmacy Contact']},
+        'platform': 'TELEGRAM'}]}
+finddoc = {'fulfillmentMessages': [
+    {'text': {'text': ['FUCK YOU']}, 'platform': 'TELEGRAM'}, {
+        'quickReplies': {'title': 'Please choose any option 👇',
+                         'quickReplies': ['Find Doctor', 'Emergency Room Contact', 'Pharmacy Contact']},
+        'platform': 'TELEGRAM'}]}
 
 
 @app.route('/')
@@ -109,9 +121,9 @@ def processRequest(req):
         print(res)
 
     elif intent == "doctorNumber":
-        #print(checkListDocID[0])
-        doctorInfo,name,doctorID = provideDocDetailNumber(query,specialization,checkListDocID)
-        if(doctorID!=0):
+        # print(checkListDocID[0])
+        doctorInfo, name, doctorID = provideDocDetailNumber(query, specialization, checkListDocID)
+        if (doctorID != 0):
             docID.append(doctorID)
             quickReplies = [
                 "Operational Hours",
@@ -128,11 +140,6 @@ def processRequest(req):
                 "Exit"
             ]
         res = createResponseForAdditionalInfo(doctorInfo, quickReplies)
-
-
-
-
-
 
 
     elif intent == 'New User - yes':
@@ -195,25 +202,26 @@ def processRequest(req):
         print(res)
 
     elif intent == 'fallback':
-        if len(intentQueryList) == 0:
+        if len(intentList) == 0:
+            intentList.pop()
             res = createResponse("Please say Hi or Hello to start your conversation with MediMate Bot")
-            intentQueryList.pop()
-        elif len(intentQueryList) >= 1:
-            res = intentQueryList[-1]
-            intentQueryList.pop()
-
-
+        elif len(intentList) >= 1:
+            intentList.pop()
+            if intentList[-1] == 'MedimateWelcomeIntent':
+                res = MedimateWelcomeIntent
+            elif intentList[-1] == 'New User - yes':
+                res = NewUseryes
+            elif intentList[-1] == 'New User - no':
+                res = NewUseryes
 
     elif intent == 'exitConversation':
-        res = createResponse("Thankyou for using Medimate :)")
-
-
+        res = createResponse("Thankyou for using Medimate. \n Hope you get well soon :)")
 
     print(res)
     print("the query response is stored below")
-    intentQueryList.append(res)
+    intentqList.append(res)
+    print(intentqList)
     print(intentList)
-    print(intentQueryList)
     return res
 
 
@@ -744,24 +752,20 @@ def provideOperationalHours(docID, specialization):
     print(hours)
     return hours
 
+
 def provideDocDetailNumber(number, specialization, checkListDocID):
     number = int(number)
     print(number)
     print(len(checkListDocID[0]))
-    if(number<len(checkListDocID[0]) and  number != 0):
-        doctorInfo, name = provideDoctorDetails(checkListDocID[0][number-1],specialization,checkListDocID)
-        doctorID = checkListDocID[0][number-1]
+    if (number < len(checkListDocID[0]) and number != 0):
+        doctorInfo, name = provideDoctorDetails(checkListDocID[0][number - 1], specialization, checkListDocID)
+        doctorID = checkListDocID[0][number - 1]
     else:
         doctorInfo = "The number you have chosen is INVALID"
         name = "INVALID"
         doctorID = 0
 
-    return doctorInfo,name,doctorID
-
-
-
-
-
+    return doctorInfo, name, doctorID
 
 
 if __name__ == "__main__":
