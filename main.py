@@ -2,6 +2,7 @@ import firebase_admin
 from firebase_admin import credentials
 from firebase_admin import firestore
 from firebase_admin import db
+from termcolor import colored
 from flask import Flask, request, jsonify, make_response, render_template, json
 
 cred = credentials.Certificate("serviceAccountKey.json")
@@ -23,7 +24,7 @@ checkListDocID = []
 intentList = []
 intentqList = []
 MedimateWelcomeIntent = {
-    "fulfillmentText": "Sorry,what was that? \n But you can always choose from the options below that i can help you with"}
+    "fulfillmentText": "Sorry,what was that?🤔 \n But you can always choose from the options below that i can help you with"}
 NewUseryes = {'fulfillmentMessages': [
     {'text': {'text': ['I did not get that. Could you try that again']}, 'platform': 'TELEGRAM'}, {
         'quickReplies': {'title': 'Please choose from these option 👇',
@@ -70,12 +71,12 @@ def saveConversations(query, result, session, userid, intent):
 
 
 def processRequest(req):
-    print(userID)
+    print(req)
     query_response = req.get("queryResult")
     intent = query_response.get("intent").get("displayName")
     intentList.append(intent)
-    print("The intent list is below")
-    print(intentList)
+    # print("The intent list is below")
+    # print(intentList)
     # print(query_response)
     res = ''
     query = query_response.get('queryText')
@@ -109,7 +110,7 @@ def processRequest(req):
         else:
             quickReplies = [
                 "Operational Hours",
-                "Navigational Hours",
+                "Navigational Route",
                 "Exit"
             ]
 
@@ -127,7 +128,7 @@ def processRequest(req):
             docID.append(doctorID)
             quickReplies = [
                 "Operational Hours",
-                "Navigational Hours",
+                "Navigational Route",
                 "Exit"
             ]
 
@@ -167,6 +168,11 @@ def processRequest(req):
         # saveConversations(query, result, session, userID[-1], intent)
         # res = createCommonResponse(existingUser)
         # return res
+    elif intent == 'requestNotes':
+        print('in requestNotes', req)
+        notes = req['queryResult']['parameters']['notes']
+        print('in requestNotes', notes)
+        saveConversations(query, notes, session, userID[-1], intent)
 
     elif intent == 'pharmacyEmergency':
         pharmacyDetail = providePharmacyDetails(req)
@@ -215,13 +221,13 @@ def processRequest(req):
                 res = NewUseryes
 
     elif intent == 'exitConversation':
-        res = createResponse("Thankyou for using Medimate. \n Hope you get well soon :)")
+        res = createResponse("Thankyou for using Medimate. \n Hope you get well soon 😀 ")
 
     print(res)
-    print("the query response is stored below")
+    # print("the query response is stored below")
     intentqList.append(res)
-    print(intentqList)
-    print(intentList)
+    # print(intentqList)
+    # print(intentList)
     return res
 
 
@@ -419,7 +425,7 @@ def newUserDetails(req, session):
 
     if checkUserExistenceByEmail(userEmail):
         userId = saveUserDetail(session, userEmail, userName, zipCode)
-        message = "Hello, " + userName + " welcome to MediMate. Your userID is : " + userId
+        message = "Hello, " + userName + " welcome to MediMate 🙋‍♀️.\n Your userID is : " + userId
         quickReplies = [
             "Find Doctor",
             "Emergency Room Contact",
@@ -476,7 +482,6 @@ def checkUserExistenceByEmail(userEmail):
 def existingUserDetail(req):
     userId = req['queryResult']['parameters']['user_Id']
     # print(userId)
-
     userName = checkUserExistence(userId)
     userID.append(userId)
 
@@ -485,14 +490,21 @@ def existingUserDetail(req):
                   "Please write 'register' to save your details. \n \n Or would you like to re-enter your user-Id"
         res = createResponse(message)
     else:
-        message, doesConvoExist = fetchPreviousConversation(userId)
-        response = "Welcome back " + str(userName) + '. ' + message
+        message, doesConvoExist, doesNoteExist = fetchPreviousConversation(userId)
+        response = "Welcome back " + str(userName) + ' 🙋‍♀️. \n' + message
         if doesConvoExist:
-            quickReplies = [
-                "Notes",
-                "Go to services menu"
-            ]
-            res = createCommonResponse(response, quickReplies)
+            if doesNoteExist:
+                quickReplies = [
+                    "Exit",
+                    "Go to services menu"
+                ]
+                res = createCommonResponse(response + ' \n \nHow would you like to proceed now?', quickReplies)
+            else:
+                quickReplies = [
+                    "Notes",
+                    "Go to services menu"
+                ]
+                res = createCommonResponse(response, quickReplies)
         else:
             res = createResponse(response)
     return res
@@ -503,6 +515,7 @@ def fetchPreviousConversation(userId):
     message = ''
     specialist = ''
     docName = ''
+    note = None
     docs = db.collection('UserHistory').where('userID', '==', userId).stream()
     documents = [d for d in docs]
     if len(documents):
@@ -513,21 +526,21 @@ def fetchPreviousConversation(userId):
         collections = db.collection('UserHistory').document(session).collections()
         for collection in collections:
             for doc in collection.stream():
-                print(f'{doc.id} => {doc.to_dict()}')
+                # print(f'{doc.id} => {doc.to_dict()}')
                 if doc.id == 'finddoctors':
                     specialist = doc.to_dict()['reply']
-                    # message += 'Looks like, you were looking for a ' + doc.to_dict()['reply'] + '. \n'
-                    # print(message)
                 if doc.id == 'doctorInfo':
-                    docName = doc.to_dict()['reply']
-                    # message += 'I hope your appointment went well with ' + doc.to_dict()['reply'] + \
-                    #           '.\n Do you want me to create a note about the appointment?'
-                    # print(message)
-            return '\n Looks like, you were looking for a ' + specialist + '. \n I hope your appointment went well with ' + docName + \
-                   '.\n Do you want me to create a note about the appointment?', True
+                    docName = doc.to_dict()['reply'].split(':')[1]
+                if doc.id == 'requestNotes':
+                    note = doc.to_dict()['reply']
+            if note is not None:
+                return 'You wanted me to remind me the following from your last appointment with the ' + specialist + ' ' + docName + '\n' + note, True, True
+            else:
+                return 'Looks like, you were looking for a ' + specialist + '. \n I hope your appointment went well with ' + docName + \
+                       '.\n Do you want me to create a note about the appointment?', True, False
     else:
         # print(u'empty query')
-        return "", False
+        return "", False, False
 
     # if docs is not None:
 
@@ -552,7 +565,7 @@ def checkUserExistence(userId):
         for doc in documents:
             user = doc.to_dict()
             user_name = user['UserName']
-            print(user_name)
+            # print(user_name)
 
             return user_name
     else:
@@ -561,7 +574,6 @@ def checkUserExistence(userId):
 
 
 def getListofDoctors(req):
-    result = ["Here is the list of doctors to choose from: "]
     i = 1
     doctorID = []
 
@@ -570,6 +582,8 @@ def getListofDoctors(req):
     specialization = str(parameters.get('doctorspecialization'))
     language = str(parameters.get('language')).lower()
     print(language)
+
+    result = ["Here is the list of " + specialization + " to choose from:"]
 
     if parameters.get('doctorspecialization'):
         if str(parameters.get('doctorspecialization')) == str('general physician'):
@@ -618,7 +632,7 @@ def getListofDoctors(req):
                 docName = '👉' + u'{}'.format(doctors.to_dict()['Name']) + "\n" + "Doctor ID: " + docID + "\n"
                 i = i + 1
                 result.append(docName)
-        print(result)
+        # print(result)
         if len(result) == 1:
             res = "Unfortunately, there are no doctors with your requirement. Please try again with a different language of communication. "
         else:
@@ -630,6 +644,7 @@ def getListofDoctors(req):
 
 def provideDoctorDetails(options, specialization, checkListofDocs):
     options = options.upper()
+    url = ''
     if options in checkListofDocs[0]:
         if specialization[-1] != "general physician":
             Specialization = specialization[-1].capitalize()
@@ -646,7 +661,12 @@ def provideDoctorDetails(options, specialization, checkListofDocs):
             name = "🩺 Name : " + u'{}'.format(info.to_dict()['Name'])
             address = "📌 Address : " + u'{}'.format(info.to_dict()['Address'])
             phone = "📞 Phone : " + u'{}'.format(info.to_dict()['Telephone'])
-            res = name + "\n" + address + "\n" + phone
+
+            if 'URL' in info.to_dict():
+                url += "🌐 Visit the Doctor's URL : " + u'{}'.format(info.to_dict()['URL'])
+
+            res = name + "\n" + address + "\n" + phone + '\n' + url
+
         else:
             res = 'Please make sure to enter the correct Doctor ID'
 
