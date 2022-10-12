@@ -3,6 +3,7 @@ from firebase_admin import credentials
 from firebase_admin import firestore
 from firebase_admin import db
 from termcolor import colored
+import datetime
 from flask import Flask, request, jsonify, make_response, render_template, json
 
 cred = credentials.Certificate("serviceAccountKey.json")
@@ -24,7 +25,8 @@ checkListDocID = []
 intentList = []
 intentqList = []
 MedimateWelcomeIntent = {
-    "fulfillmentText": "Sorry,what was that?🤔 \n But you can always choose from the options below that i can help you with"}
+    "fulfillmentText": "Sorry,what was that?🤔 \n But you can always choose from the options below that i can help "
+                       "you with"}
 NewUseryes = {'fulfillmentMessages': [
     {'text': {'text': ['I did not get that. Could you try that again']}, 'platform': 'TELEGRAM'}, {
         'quickReplies': {'title': 'Please choose from these option 👇',
@@ -530,7 +532,8 @@ def existingUserDetail(req):
                     "Exit",
                     "Go to services menu"
                 ]
-                res = createCommonResponse(response + ' \n \nHow would you like to proceed now?', quickReplies, textForQuickReplies)
+                res = createCommonResponse(response + ' \n \nHow would you like to proceed now?', quickReplies,
+                                           textForQuickReplies)
             else:
                 textForQuickReplies = 'Please choose any option 👇'
                 quickReplies = [
@@ -684,6 +687,11 @@ def getListofDoctors(req):
 def provideDoctorDetails(options, specialization, checkListofDocs):
     options = options.upper()
     url = ''
+    hours = ""
+    workingHours = ""
+    now = datetime.datetime.now()
+    currentDay = now.strftime("%A")
+
     if options in checkListofDocs[0]:
         if specialization[-1] != "general physician":
             Specialization = specialization[-1].capitalize()
@@ -693,7 +701,13 @@ def provideDoctorDetails(options, specialization, checkListofDocs):
 
         detailedInfo = db.collection(Specialization).document(options)
         info = detailedInfo.get()
+        print("prinitng to test okay?")
         print(info)
+
+        if u'{}'.format(info.to_dict()['OperationalHours'][currentDay]) == -1:
+            workingHours = "It looks like this doctor is not Open on " + currentDay + "s"
+        else:
+            workingHours = "This doctor is Open today from " + u'{}'.format(info.to_dict()['OperationalHours'][currentDay])
 
         res = ""
         name = ""
@@ -705,7 +719,7 @@ def provideDoctorDetails(options, specialization, checkListofDocs):
             if 'URL' in info.to_dict():
                 url += "🌐 Visit the Doctor's URL : " + u'{}'.format(info.to_dict()['URL'])
 
-            res = name + "\n" + address + "\n" + phone + '\n' + url
+            res = name + "\n" + address + "\n" + phone + '\n' + url + '\n' + workingHours
 
         else:
             res = 'Please make sure to enter the correct Doctor ID'
