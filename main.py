@@ -92,7 +92,9 @@ def processRequest(req):
 
     elif intent == 'finddoctors':
         # print("HIiii")
-        getDoctors, specout, docNo = getListofDoctors(req)
+        retrieveLanguage = db.collection(u'Users').document(userID[-1]).get()
+        language = u'{}'.format(retrieveLanguage.to_dict()['preferredLanguage'])
+        getDoctors, specout, docNo = getListofDoctors(req,language)
         specialization.append(specout)
         checkListDocID.append(docNo)
         saveConversations(query, req['queryResult']['parameters'].get('doctorspecialization'), session, userID[-1],
@@ -615,14 +617,14 @@ def checkUserExistence(userId):
         return ""
 
 
-def getListofDoctors(req):
+def getListofDoctors(req,language):
     i = 1
     doctorID = []
 
     parameters = req['queryResult']['parameters']
     # print('Dialogflow parameters:')
     specialization = str(parameters.get('doctorspecialization'))
-    language = str(parameters.get('language')).lower()
+    language = language.lower()
     print(language)
 
     result = ["Here is the list of " + specialization + " to choose from:"]
@@ -739,7 +741,10 @@ def processLanguage(specialization, language):
         print(Specialization)
     else:
         Specialization = specialization
-    doctors = db.collection(Specialization).where(u'languageSpoken', u'array_contains', language).get()
+    if(language!= ""):
+        doctors = db.collection(Specialization).where(u'languageSpoken', u'array_contains', language).get()
+    else:
+        doctors = db.collection(Specialization).get()
     return doctors
 
 
@@ -843,4 +848,4 @@ def provideDocDetailNumber(number, specialization, checkListDocID):
 
 
 if __name__ == "__main__":
-    app.run(debug=True, port=5004)
+    app.run(debug=True, port=5002)
