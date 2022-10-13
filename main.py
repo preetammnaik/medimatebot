@@ -94,7 +94,7 @@ def processRequest(req):
         # print("HIiii")
         retrieveLanguage = db.collection(u'Users').document(userID[-1]).get()
         language = u'{}'.format(retrieveLanguage.to_dict()['preferredLanguage'])
-        getDoctors, specout, docNo = getListofDoctors(req,language)
+        getDoctors, specout, docNo = getListofDoctors(req, language)
         specialization.append(specout)
         checkListDocID.append(docNo)
         saveConversations(query, req['queryResult']['parameters'].get('doctorspecialization'), session, userID[-1],
@@ -617,7 +617,7 @@ def checkUserExistence(userId):
         return ""
 
 
-def getListofDoctors(req,language):
+def getListofDoctors(req, language):
     i = 1
     doctorID = []
 
@@ -705,11 +705,20 @@ def provideDoctorDetails(options, specialization, checkListofDocs):
         info = detailedInfo.get()
         print("prinitng to test okay?")
         print(info)
+        OperationalHours = u'{}'.format(info.to_dict()['OperationalHours'])
+        OperationalHours = OperationalHours.replace("{", "")
+        OperationalHours = OperationalHours.replace("}", "")
+        delim = OperationalHours.split(",")
+        i = 1
+        for opHrs in delim:
+            hours += str(i) + "." + opHrs + "\n"
+            i += 1
 
-        if u'{}'.format(info.to_dict()['OperationalHours'][currentDay]) == -1:
+        if hours.find(currentDay) == -1:
             workingHours = "It looks like this doctor is not Open on " + currentDay + "s"
         else:
-            workingHours = "This doctor is Open today from " + u'{}'.format(info.to_dict()['OperationalHours'][currentDay])
+            workingHours = "This doctor is Open today from " + u'{}'.format(
+                info.to_dict()['OperationalHours'][currentDay])
 
         res = ""
         name = ""
@@ -741,7 +750,7 @@ def processLanguage(specialization, language):
         print(Specialization)
     else:
         Specialization = specialization
-    if(language!= ""):
+    if (language != ""):
         doctors = db.collection(Specialization).where(u'languageSpoken', u'array_contains', language).get()
     else:
         doctors = db.collection(Specialization).get()
@@ -848,4 +857,4 @@ def provideDocDetailNumber(number, specialization, checkListDocID):
 
 
 if __name__ == "__main__":
-    app.run(debug=True, port=5002)
+    app.run(debug=True, port=5004)
