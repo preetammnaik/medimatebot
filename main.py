@@ -521,7 +521,7 @@ def existingUserDetail(req):
         textForQuickReplies = 'Please choose any option 👇'
         quickReplies = [
             "Re-enter",
-            "Register"
+            "Exit"
         ]
         res = createCommonResponse(message, quickReplies, textForQuickReplies)
     else:
