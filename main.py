@@ -467,13 +467,13 @@ def saveUserDetail(session, userEmail, userName):
     userID.append(userId)
 
     doc_ref = db.collection(u'Users').document(userId)
-    my_data = {'UserName': userName, 'UserEmail': userEmail, 'userID': userId}
+    my_data = {'UserName': userName, 'UserEmail': userEmail, 'userID': userId, 'languageSpecification': ''}
     doc_ref.set(my_data)
 
     # print(my_data)
     # print(doc_userhistory)
-    doc_userhistory = db.collection(u'UserHistory').document(session)
-    my_userHistory = {'userID': userId, 'sessionId': session}
+    doc_userhistory = db.collection(u'UserHistory').document(session + userId)
+    my_userHistory = {'userID': userId, 'sessionId': session + userId}
     doc_userhistory.set(my_userHistory)
 
     return userId
@@ -484,7 +484,7 @@ def saveUserLanguagePreference(request):
     preferredLanguage = request['queryResult']['parameters']['languageSpecification']
 
     doc_ref = db.collection(u'Users').document(userID[-1])
-    doc_ref.set({u'preferredLanguage': preferredLanguage}, merge=True)
+    doc_ref.update({u'preferredLanguage': preferredLanguage})
 
     message = "I would keep in mind while performing the tasks that you prefer " + preferredLanguage
     textForQuickReplies = 'I provide the following services, please choose any option 👇'
