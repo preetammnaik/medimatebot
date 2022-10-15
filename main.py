@@ -58,16 +58,14 @@ def index():
 
 def saveConversations(query, result, session, userid, intent):
     print('Im in save')
-    doc_reff = db.collection(u'UserHistory').document(session)
-    user_conversation = {
-        'query': query,
-        'reply': result
-    }
-    print(userid)
-    # sessionConvo = {'userID': userid, 'sessionId': session}
-    # doc_reff.set(sessionConvo)
-    intentConvo = doc_reff.collection('conversation').document(intent)
-    intentConvo.set(user_conversation)
+    if userid != 'test':
+        doc_reff = db.collection(u'UserHistory').document(session + '.' + userid)
+        user_conversation = {
+            'query': query,
+            'reply': result
+        }
+        intentConvo = doc_reff.collection('conversation').document(intent)
+        intentConvo.set(user_conversation)
     # print(result)
     # print(session)
 
@@ -174,6 +172,13 @@ def processRequest(req):
         # return res
     elif intent == 'requestNotes':
         notes = req['queryResult']['parameters']['notes']
+        message = "Noted 👍." + '\n \nAs you already know I provide the following services,'
+        textForQuickReplies = 'please choose any option 👇'
+        quickReplies = ["Find Doctor 🔍",
+                        "Emergency Room Contact 🚨",
+                        "Pharmacy Contact 💊"
+                        ]
+        res = createCommonResponse(message, quickReplies, textForQuickReplies)
         saveConversations(query, notes, session, userID[-1], intent)
 
     elif intent == 'enterLanguagePreference':
@@ -526,7 +531,7 @@ def existingUserDetail(req):
         res = createCommonResponse(message, quickReplies, textForQuickReplies)
     else:
         message, doesConvoExist, doesNoteExist = fetchPreviousConversation(userId)
-        response = "Welcome back " + str(userName) + ' 🙋‍♀️. \n' + message
+        response = "Welcome back " + str(userName) + ' 🙋‍♀️. \n\n' + message
         if doesConvoExist:
             if doesNoteExist:
                 textForQuickReplies = 'Please choose any option 👇'
@@ -567,6 +572,7 @@ def fetchPreviousConversation(userId):
             user = doc.to_dict()
             # print("session", user)
             session = user['sessionId']
+            print("from here 1", user)
         collections = db.collection('UserHistory').document(session).collections()
         for collection in collections:
             for doc in collection.stream():
@@ -578,13 +584,15 @@ def fetchPreviousConversation(userId):
                 if doc.id == 'requestNotes':
                     note = doc.to_dict()['reply']
             if note != '':
-                return 'You wanted me to remind me the following from your last appointment with the ' + specialist + ' ' + docName + '\n' + note, True, True
+                print("from here 1")
+                return 'You wanted me to remind you the following from your last appointment with the ' + specialist + ' ' + docName + '\n\n 🎗️' + note, True, True
             else:
+                print("from here 2")
                 return 'Looks like, you were looking for a ' + specialist + '. \n I hope your appointment went well with ' + docName + \
                        '.\n Do you want me to create a note about the appointment?', True, False
     else:
-        # print(u'empty query')
-        return "", False, False
+        print("from here 3")
+        return "You had no prior appointments.", False, False
 
     # if docs is not None:
 
@@ -637,7 +645,8 @@ def getListofDoctors(req, language):
                 docID = u'{}'.format(doctors.to_dict()['DocID'])
                 doctorID.append(str(docID))
                 # str(i) +
-                docName = '👉' + u'{}'.format(doctors.to_dict()['Name']) + "\n" + "Doctor ID: " + docID + "\n"
+                docName = '👉' + str(i) + ' ' + u'{}'.format(
+                    doctors.to_dict()['Name']) + "\n" + "Doctor ID: " + docID + "\n"
                 i = i + 1
                 result.append(docName)
         elif str(parameters.get('doctorspecialization')) == str('gynaecologist'):
@@ -646,7 +655,8 @@ def getListofDoctors(req, language):
                 docID = u'{}'.format(doctors.to_dict()['DocID'])
                 doctorID.append(str(docID))
                 # str(i) +
-                docName = '👉' + u'{}'.format(doctors.to_dict()['Name']) + "\n" + "Doctor ID: " + docID + "\n"
+                docName = '👉' + str(i) + ' ' + u'{}'.format(
+                    doctors.to_dict()['Name']) + "\n" + "Doctor ID: " + docID + "\n"
                 i = i + 1
                 result.append(docName)
         elif str(parameters.get('doctorspecialization')) == str('ophthalmologist'):
@@ -655,7 +665,8 @@ def getListofDoctors(req, language):
                 docID = u'{}'.format(doctors.to_dict()['DocID'])
                 doctorID.append(str(docID))
                 # str(i) +
-                docName = '👉' + u'{}'.format(doctors.to_dict()['Name']) + "\n" + "Doctor ID: " + docID + "\n"
+                docName = '👉' + str(i) + ' ' + u'{}'.format(
+                    doctors.to_dict()['Name']) + "\n" + "Doctor ID: " + docID + "\n"
                 i = i + 1
                 result.append(docName)
         elif str(parameters.get('doctorspecialization')) == str('cardiologist'):
@@ -664,7 +675,8 @@ def getListofDoctors(req, language):
                 docID = u'{}'.format(doctors.to_dict()['DocID'])
                 doctorID.append(str(docID))
                 # str(i) +
-                docName = '👉' + u'{}'.format(doctors.to_dict()['Name']) + "\n" + "Doctor ID: " + docID + "\n"
+                docName = '👉' + str(i) + ' ' + u'{}'.format(
+                    doctors.to_dict()['Name']) + "\n" + "Doctor ID: " + docID + "\n"
                 i = i + 1
                 result.append(docName)
         elif str(parameters.get('doctorspecialization')) == str('pain'):
@@ -673,14 +685,15 @@ def getListofDoctors(req, language):
                 docID = u'{}'.format(doctors.to_dict()['DocID'])
                 doctorID.append(str(docID))
                 # str(i) +
-                docName = '👉' + u'{}'.format(doctors.to_dict()['Name']) + "\n" + "Doctor ID: " + docID + "\n"
+                docName = '👉' + str(i) + ' ' + u'{}'.format(
+                    doctors.to_dict()['Name']) + "\n" + "Doctor ID: " + docID + "\n"
                 i = i + 1
                 result.append(docName)
         # print(result)
         if len(result) == 1:
             res = "Unfortunately, there are no doctors with your requirement. Please try again with a different language of communication. "
         else:
-            res = "\r\n".join(x for x in result) + "\n" + 'Please enter the ID of a doctor for more info:)'
+            res = "\r\n".join(x for x in result) + "\n" + 'Please enter the ID of a doctor for more info ℹ️'
         print(res)
 
         return res, specialization, doctorID
