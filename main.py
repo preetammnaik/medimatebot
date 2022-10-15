@@ -467,13 +467,13 @@ def saveUserDetail(session, userEmail, userName):
     userID.append(userId)
 
     doc_ref = db.collection(u'Users').document(userId)
-    my_data = {'UserName': userName, 'UserEmail': userEmail, 'userID': userId, 'languageSpecification': ''}
+    my_data = {'UserName': userName, 'UserEmail': userEmail, 'userID': userId, 'preferredLanguage': ''}
     doc_ref.set(my_data)
 
     # print(my_data)
     # print(doc_userhistory)
-    doc_userhistory = db.collection(u'UserHistory').document(session + userId)
-    my_userHistory = {'userID': userId, 'sessionId': session + userId}
+    doc_userhistory = db.collection(u'UserHistory').document(session + '.' + userId)
+    my_userHistory = {'userID': userId, 'sessionId': session + '.' + userId}
     doc_userhistory.set(my_userHistory)
 
     return userId
@@ -559,7 +559,7 @@ def fetchPreviousConversation(userId):
     message = ''
     specialist = ''
     docName = ''
-    note = None
+    note = ''
     docs = db.collection('UserHistory').where('userID', '==', userId).stream()
     documents = [d for d in docs]
     if len(documents):
@@ -577,7 +577,7 @@ def fetchPreviousConversation(userId):
                     docName = doc.to_dict()['reply'].split(':')[1]
                 if doc.id == 'requestNotes':
                     note = doc.to_dict()['reply']
-            if note is not None:
+            if note != '':
                 return 'You wanted me to remind me the following from your last appointment with the ' + specialist + ' ' + docName + '\n' + note, True, True
             else:
                 return 'Looks like, you were looking for a ' + specialist + '. \n I hope your appointment went well with ' + docName + \
