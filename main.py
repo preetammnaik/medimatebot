@@ -392,7 +392,7 @@ def createResponseForNavigationalInfo(fulfilment_text):
                 "quickReplies": {
                     "title": "If you need any additional information, please choose one of the options 👇",
                     "quickReplies": [
-                        "Operational Hours",
+                        "Operational Hours ⏳",
                         "Exit❌"
                     ]
                 },
@@ -416,8 +416,8 @@ def createResponseForOpHoursInfo(fulfilment_text):
                 "quickReplies": {
                     "title": "If you need any additional information, please choose one of the options 👇",
                     "quickReplies": [
-                        "Navigational Routes",
-                        "Exit❌"
+                        "Navigational Routes 📍",
+                        "Exit ❌"
                     ]
                 },
                 "platform": "TELEGRAM"
@@ -438,7 +438,9 @@ def newUserDetails(req, session):
     if checkUserExistenceByEmail(userEmail):
         userId = saveUserDetail(session, userEmail, userName)
         message = "Hello " + userName + ", welcome to MediMate 🙋‍♀️.\n Your userID is : " + userId + \
-                  '\n \nIs there any language that you would like your medical expert to speak in?'
+                  '\n \nIs there any language that you would like your medical expert to speak in? ' + '\nAvailable Languages are :' + '\n1.English\n2.German\n3.French\n4.Spanish\n5.Italian'
+
+
         # quickReplies = [
         #     "Find Doctor 🔍",
         #     "Emergency Room Contact 🚨",
@@ -753,12 +755,12 @@ def provideDoctorDetails(options, specialization, checkListofDocs):
             res = name + "\n" + address + "\n" + phone + '\n' + url + '\n' + workingHours
 
         else:
-            res = 'Please make sure to enter the correct Doctor ID'
+            res = 'Please make sure to enter the correct Doctor ID 😥'
 
         print(res)
 
     else:
-        res = "The Doctor ID may be valid but does not meet your language requirements."
+        res = "The Doctor ID may be valid but does not meet your language requirements. 😥"
         name = "INVALID"
 
     return res, name
@@ -825,10 +827,10 @@ def provideNavigationRoutes(docID, specialization):
         delim = navigation.split(",")
         i = 1
         for routes in delim:
-            route += str(i) + "." + routes + "\n"
+            route += "📍" + str(i) + "." + routes + "\n"
             i += 1
     else:
-        route = 'Unfortunately, the routes are not available for this Doctor ID. '
+        route = 'Unfortunately, the routes are not available for this Doctor ID. 😟 '
 
     print(route)
     return route
@@ -849,13 +851,14 @@ def provideOperationalHours(docID, specialization):
         OperationalHours = u'{}'.format(info.to_dict()['OperationalHours'])
         OperationalHours = OperationalHours.replace("{", "")
         OperationalHours = OperationalHours.replace("}", "")
+        OperationalHours = OperationalHours.replace("'", "")
         delim = OperationalHours.split(",")
         i = 1
         for opHrs in delim:
-            hours += str(i) + "." + opHrs + "\n"
+            hours += "⌛ "+str(i) + "." + opHrs + "\n"
             i += 1
     else:
-        OperationalHours = 'Unfortunately, the working timings are not available for this Doctor ID. '
+        OperationalHours = 'Unfortunately, the working timings are not available for this Doctor ID. 😟'
     ##pleaseworknowpppppsssss
     print(hours)
     return hours
@@ -869,7 +872,7 @@ def provideDocDetailNumber(number, specialization, checkListDocID):
         doctorInfo, name = provideDoctorDetails(checkListDocID[0][number - 1], specialization, checkListDocID)
         doctorID = checkListDocID[0][number - 1]
     else:
-        doctorInfo = "The number you have chosen is INVALID"
+        doctorInfo = "The number you have chosen is INVALID 😟"
         name = "INVALID"
         doctorID = 0
 
@@ -877,4 +880,4 @@ def provideDocDetailNumber(number, specialization, checkListDocID):
 
 
 if __name__ == "__main__":
-    app.run(debug=True, port=5004)
+    app.run(debug=True, port=5002)
