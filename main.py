@@ -175,7 +175,7 @@ def processRequest(req):
     elif intent == 'getUserId':
         # print('in here')
         res = existingUserDetail(req)
-        # saveConversations(query, result, session, userID[-1], intent)
+        saveConversations(query, result, session, userID[-1], intent)
         # res = createCommonResponse(existingUser)
         # return res
     elif intent == 'requestNotes':
@@ -195,13 +195,14 @@ def processRequest(req):
 
     elif intent == 'pharmacyEmergency':
         pharmacyDetail = providePharmacyDetails(req)
+        textForQuickReplies = 'please choose any option 👇'
         quickReplies = [
             "Find Doctor 🔍",
             "Emergency Information",
             "Exit❌"
         ]
-        res = createCommonResponse(pharmacyDetail, quickReplies)
-        saveConversations(query, result, session, userID[-1], intent)
+        res = createCommonResponse(pharmacyDetail, quickReplies, textForQuickReplies)
+        saveConversations(query, "emergency", session, userID[-1], intent)
         print(res)
         # return res
 
@@ -214,7 +215,7 @@ def processRequest(req):
             "Exit❌"
         ]
         res = createCommonResponse(emergencyDetail, quickReplies, textForQuickReplies)
-        saveConversations(query, result, session, userID[-1], intent)
+        saveConversations(query, "emergency", session, userID[-1], intent)
         print(res)
 
     elif intent == 'navigationalRoutes':
@@ -463,9 +464,13 @@ def newUserDetails(req, session):
         ]
         res = createCommonResponse(message, quickReplies, textForQuickReplies)
     else:
-        message = 'Looks like this email id is already registered with us, please try a different email Id'
-        res = createResponse(message)
-
+        message = 'Looks like this email id is already registered with us, please try again with a different email Id'
+        textForQuickReplies = 'Please choose any of the below options 👇'
+        quickReplies = [
+            "New user",
+            "Existing User",
+        ]
+        res = createCommonResponse(message, quickReplies, textForQuickReplies)
     # docs = db.collection('Users').where('UserEmail', '==', userEmail).stream()
     # if userEmail in docs:
     #     for doc in docs:
@@ -580,6 +585,8 @@ def fetchPreviousConversation(userId):
     specialist = ''
     docName = ''
     note = ''
+    emergency = ''
+    pharmacy = ''
     docs = db.collection('UserHistory').where('userID', '==', userId).stream()
     documents = [d for d in docs]
     if len(documents):
@@ -587,31 +594,35 @@ def fetchPreviousConversation(userId):
             user = doc.to_dict()
             # print("session", user)
             session = user['sessionId']
-            print("from here 1", user)
         collections = db.collection('UserHistory').document(session).collections()
         for collection in collections:
             for doc in collection.stream():
                 # print(f'{doc.id} => {doc.to_dict()}')
                 if doc.id == 'finddoctors':
                     specialist = doc.to_dict()['reply']
-                if doc.id == 'doctorInfo':
+                if doc.id == 'doctorInfo' or doc.id == 'doctorNumber':
                     docName = doc.to_dict()['reply'].split(':')[1]
                 if doc.id == 'requestNotes':
                     note = doc.to_dict()['reply']
+                if doc.id == 'emergencyInfo':
+                    emergency = doc.to_dict()['reply']
+                if doc.id == 'pharmacyEmergency':
+                    pharmacy = doc.to_dict()['reply']
             if note != '':
-                print("from here 1")
                 return 'You wanted me to remind you the following from your last appointment with the ' + specialist + ' ' + docName + '\n\n 🎗️' + note, True, True
             else:
-                print("from here 2")
                 if specialist != '' and docName != '':
-                    return 'Looks like, you were looking for a ' + specialist + '. \n I hope your appointment went ' \
+                    return 'Looks like, you were looking for a ' + specialist + '. \nI hope your appointment went ' \
                                                                                 'well with ' + docName + \
-                           '.\n Do you want me to create a note about the appointment?', True, False
+                           '.\n\nDo you want me to create a note about the appointment?', True, False
+                elif emergency != '':
+                    return "You had an emergency last time, I hope you are better now.\n", True, False
+                elif pharmacy != '':
+                    return "You had an pharmacy emergency last time, I hope you are better now.\n", True, False
                 else:
-                    return "You had no prior appointments.", False, False
+                    return "You had no prior appointments.\n", False, False
     else:
-        print("from here 3")
-        return "You had no prior appointments.", False, False
+        return "You had no prior appointments.\n", False, False
 
     # if docs is not None:
 
@@ -755,9 +766,9 @@ def provideDoctorDetails(options, specialization, checkListofDocs):
             i += 1
 
         if hours.find(currentDay) == -1:
-            workingHours = "It looks like this doctor is not Open on " + currentDay + "s"
+            workingHours = "\n\nIt looks like this doctor is not Open on " + currentDay + "s"
         else:
-            workingHours = "This doctor is Open today from " + u'{}'.format(
+            workingHours = "\n\nThis doctor is Open today from " + u'{}'.format(
                 info.to_dict()['OperationalHours'][currentDay])
 
         res = ""
