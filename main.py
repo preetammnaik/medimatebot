@@ -90,8 +90,10 @@ def processRequest(req):
 
     elif intent == 'finddoctors':
         # print("HIiii")
+        language = ''
         retrieveLanguage = db.collection(u'Users').document(userID[-1]).get()
-        language = u'{}'.format(retrieveLanguage.to_dict()['preferredLanguage'])
+        if retrieveLanguage.exists:
+            language = u'{}'.format(retrieveLanguage.to_dict()['preferredLanguage'])
         getDoctors, specout, docNo = getListofDoctors(req, language)
         specialization.append(specout)
         checkListDocID.append(docNo)
@@ -107,13 +109,13 @@ def processRequest(req):
         if (name == "INVALID"):
             quickReplies = [
                 "Go back to Find Doctor 🔍",
-                "Exit"
+                "Exit❌"
             ]
         else:
             quickReplies = [
                 "Operational Hours",
                 "Navigational Route",
-                "Exit"
+                "Exit❌"
             ]
 
         res = createResponseForAdditionalInfo(doctorInfo, quickReplies)
@@ -131,17 +133,15 @@ def processRequest(req):
             quickReplies = [
                 "Operational Hours",
                 "Navigational Route",
-                "Exit"
+                "Exit❌"
             ]
-
-            saveConversations(query, name, session, userID[-1], intent)
-
             print(res)
         else:
             quickReplies = [
                 "Go back to Find Doctor 🔍",
-                "Exit"
+                "Exit❌"
             ]
+        saveConversations(query, name, session, userID[-1], intent)
         res = createResponseForAdditionalInfo(doctorInfo, quickReplies)
 
 
@@ -183,14 +183,14 @@ def processRequest(req):
 
     elif intent == 'enterLanguagePreference':
         res = saveUserLanguagePreference(req)
-        saveConversations(query, res, session, userID[-1], intent)
+        # saveConversations(query, res, session, userID[-1], intent)
 
     elif intent == 'pharmacyEmergency':
         pharmacyDetail = providePharmacyDetails(req)
         quickReplies = [
             "Find Doctor 🔍",
             "Emergency Information",
-            "Exit"
+            "Exit❌"
         ]
         res = createCommonResponse(pharmacyDetail, quickReplies)
         saveConversations(query, result, session, userID[-1], intent)
@@ -203,7 +203,7 @@ def processRequest(req):
         quickReplies = [
             "Find Doctor 🔍",
             "Pharmacy Emergency",
-            "Exit"
+            "Exit❌"
         ]
         res = createCommonResponse(emergencyDetail, quickReplies, textForQuickReplies)
         saveConversations(query, result, session, userID[-1], intent)
@@ -233,7 +233,7 @@ def processRequest(req):
                 res = NewUseryes
 
     elif intent == 'exitConversation':
-        res = createResponse("Thankyou for using Medimate. \n Hope you get well soon 😀 ")
+        res = createResponse("Thank you for using Medimate. \nHope you get well soon 😀 ")
 
     print(res)
     # print("the query response is stored below")
@@ -393,7 +393,7 @@ def createResponseForNavigationalInfo(fulfilment_text):
                     "title": "If you need any additional information, please choose one of the options 👇",
                     "quickReplies": [
                         "Operational Hours",
-                        "Exit"
+                        "Exit❌"
                     ]
                 },
                 "platform": "TELEGRAM"
@@ -417,7 +417,7 @@ def createResponseForOpHoursInfo(fulfilment_text):
                     "title": "If you need any additional information, please choose one of the options 👇",
                     "quickReplies": [
                         "Navigational Routes",
-                        "Exit"
+                        "Exit❌"
                     ]
                 },
                 "platform": "TELEGRAM"
@@ -427,18 +427,18 @@ def createResponseForOpHoursInfo(fulfilment_text):
 
 
 def newUserDetails(req, session):
-    userName = req['queryResult']['parameters']['user_name']
+    userName = req['queryResult']['parameters']['user_name']['name']
     userEmail = req['queryResult']['parameters']['user_email']
     # zipCode = req['queryResult']['parameters']['user_zipCode']
 
-    # print(userID)
-    # print(userName)
-    # print(userEmail)
+    print(userID)
+    print(userName)
+    print(userEmail)
 
     if checkUserExistenceByEmail(userEmail):
         userId = saveUserDetail(session, userEmail, userName)
         message = "Hello " + userName + ", welcome to MediMate 🙋‍♀️.\n Your userID is : " + userId + \
-                  '\n \nIs there any language that you would like your Medical expert to speak in?'
+                  '\n \nIs there any language that you would like your medical expert to speak in?'
         # quickReplies = [
         #     "Find Doctor 🔍",
         #     "Emergency Room Contact 🚨",
@@ -526,7 +526,7 @@ def existingUserDetail(req):
         textForQuickReplies = 'Please choose any option 👇'
         quickReplies = [
             "Re-enter",
-            "Exit"
+            "Exit❌"
         ]
         res = createCommonResponse(message, quickReplies, textForQuickReplies)
     else:
@@ -536,7 +536,8 @@ def existingUserDetail(req):
             if doesNoteExist:
                 textForQuickReplies = 'Please choose any option 👇'
                 quickReplies = [
-                    "Exit",
+                    "Exit❌",
+                    "Change Preferred Language",
                     "Go to services menu"
                 ]
                 res = createCommonResponse(response + ' \n \nHow would you like to proceed now?', quickReplies,
@@ -544,16 +545,18 @@ def existingUserDetail(req):
             else:
                 textForQuickReplies = 'Please choose any option 👇'
                 quickReplies = [
-                    "Notes",
+                    "Notes📄",
+                    "Change Preferred Language",
                     "Go to services menu"
                 ]
                 res = createCommonResponse(response, quickReplies, textForQuickReplies)
         else:
-            textForQuickReplies = 'I provide the following service, please choose any option 👇'
+            textForQuickReplies = 'You can choose any from the following'
             quickReplies = [
-                "Find Doctor 🔍",
-                "Emergency Room Contact 🚨",
-                "Pharmacy Contact 💊"
+                "Exit❌",
+                "Change Preferred Language",
+                "Go to services menu",
+
             ]
             res = createCommonResponse(response, quickReplies, textForQuickReplies)
     return res
@@ -588,8 +591,12 @@ def fetchPreviousConversation(userId):
                 return 'You wanted me to remind you the following from your last appointment with the ' + specialist + ' ' + docName + '\n\n 🎗️' + note, True, True
             else:
                 print("from here 2")
-                return 'Looks like, you were looking for a ' + specialist + '. \n I hope your appointment went well with ' + docName + \
-                       '.\n Do you want me to create a note about the appointment?', True, False
+                if specialist != '' and docName != '':
+                    return 'Looks like, you were looking for a ' + specialist + '. \n I hope your appointment went ' \
+                                                                                'well with ' + docName + \
+                           '.\n Do you want me to create a note about the appointment?', True, False
+                else:
+                    return "You had no prior appointments.", False, False
     else:
         print("from here 3")
         return "You had no prior appointments.", False, False
