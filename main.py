@@ -99,7 +99,15 @@ def processRequest(req):
         checkListDocID.append(docNo)
         saveConversations(query, req['queryResult']['parameters'].get('doctorspecialization'), session, userID[-1],
                           intent)
-        res = createResponse(getDoctors)
+
+        if(len(docNo)>0):
+            res = createResponse(getDoctors)
+        else:
+            quickReplies = [
+                "Go back to Find Doctor 🔍",
+                "Exit❌"
+            ]
+            res = createResponseForAdditionalInfo(getDoctors,quickReplies)
         # return res
 
     elif intent == 'doctorInfo':
@@ -234,6 +242,8 @@ def processRequest(req):
 
     elif intent == 'exitConversation':
         res = createResponse("Thank you for using Medimate. \nHope you get well soon 😀 ")
+        specialization.clear()
+        checkListDocID.clear()
 
     print(res)
     # print("the query response is stored below")
@@ -637,6 +647,7 @@ def checkUserExistence(userId):
 def getListofDoctors(req, language):
     i = 1
     doctorID = []
+    noDoctorFlag = ""
 
     parameters = req['queryResult']['parameters']
     # print('Dialogflow parameters:')
@@ -698,9 +709,16 @@ def getListofDoctors(req, language):
                     doctors.to_dict()['Name']) + "\n" + "Doctor ID: " + docID + "\n"
                 i = i + 1
                 result.append(docName)
+        elif str(parameters.get('doctorspecialization')) == str('otherdoctors'):
+            noDoctorFlag="yes"
+
         # print(result)
-        if len(result) == 1:
-            res = "Unfortunately, there are no doctors with your requirement. Please try again with a different language of communication. "
+        if len(result) == 1 and noDoctorFlag=="":
+            res = "🙁 Unfortunately, there are no doctors with your requirement. Please try again with a different language of communication. "
+            doctorID=[]
+        elif noDoctorFlag=="yes":
+            res = "🙁 Unfortunately, we do not have any doctors for your required specialization in our system / Magdeburg. We request you to seek help from the nearest available doctor outside of Magdeburg. Hope you get well soon. "
+            doctorID = []
         else:
             res = "\r\n".join(x for x in result) + "\n" + 'Please enter the ID of a doctor for more info ℹ️'
         print(res)
