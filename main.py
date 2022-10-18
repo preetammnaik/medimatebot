@@ -456,6 +456,7 @@ def createResponseForOpHoursInfo(fulfilment_text):
 
 
 def newUserDetails(req, session):
+    ['name']
     userName = req['queryResult']['parameters']['user_name']['name']
     userEmail = req['queryResult']['parameters']['user_email']
     # zipCode = req['queryResult']['parameters']['user_zipCode']
@@ -464,10 +465,10 @@ def newUserDetails(req, session):
     print(userName)
     print(userEmail)
 
-    if checkUserExistenceByEmail(userEmail):
-        userId = saveUserDetail(session, userEmail, userName)
+    if checkUserExistenceByEmail(userEmail.lower()):
+        userId = saveUserDetail(session, userEmail.lower(), userName)
         message = "Hello " + userName + ", welcome to MediMate 🙋‍♀️.\n Your userID is : " + userId + \
-                  '\n \nIs there any language that you would like your medical expert to speak in? ' + '\n(e.g. English, German , French or Spanish even Italian'
+                  '\n \nIs there any language that you would like your medical expert to speak in? ' + '\n(e.g. English, German , French or Spanish or Italian)'
 
         # quickReplies = [
         #     "Find Doctor 🔍",
@@ -632,7 +633,7 @@ def fetchPreviousConversation(userId):
                 #     pharmacy = doc.to_dict()['reply']
             if note != '':
                 return 'You wanted me to remind you the following from your last appointment:\n' \
-                       '🔸 Specilist:' + specialist + ' \n🩺 Name: ' + docName + '\n\n 🎗️ Notes:  ' + note, True, True
+                       '🔸 Specilist: ' + specialist + ' \n🩺 Name: ' + docName + '\n\n 🎗️ Notes:  ' + note, True, True
             else:
                 if specialist != '' and docName != '':
                     return 'Looks like, you were looking for a 🔸' + specialist + '. \nI hope your appointment went ' \
@@ -791,10 +792,10 @@ def provideDoctorDetails(options, specialization, checkListofDocs):
             i += 1
 
         if hours.find(currentDay) == -1:
-            workingHours = "\n\nIt looks like this doctor is not Open on " + currentDay + "s"
+            workingHours = "\n\nIt looks like this doctor is not Open on " + currentDay + "s" + '\n'
         else:
             workingHours = "\n\nThis doctor is Open today from " + u'{}'.format(
-                info.to_dict()['OperationalHours'][currentDay])
+                info.to_dict()['OperationalHours'][currentDay]) + '\n'
 
         res = ""
         name = ""
@@ -835,15 +836,15 @@ def processLanguage(specialization, language):
 
 
 def provideEmergencyDetails(req):
-    emergencyDetails = "Here is a list of Emergency numbers : " + "\n"
+    emergencyDetails = "Here is a list of Emergency numbers : " + "\n\n"
     emergency = db.collection(u'Emergency').get()
     print(emergency)
     i = 1
     for emergencyInfo in emergency:
-        name = "🩺 Name : " + "0" + str(i) + " : " + u'{}'.format(emergencyInfo.to_dict()['Name'])
-        address = "📌 Address " + "0" + str(i) + " : " + u'{}'.format(emergencyInfo.to_dict()['Address'])
-        phone = "📞 Phone " + "0" + str(i) + " : " + u'{}'.format(emergencyInfo.to_dict()['Telephone'])
-        emergencyDetails += name + "\n" + address + "\n" + phone + "\n"
+        name = " 🩺 Name : " + " : " + u'{}'.format(emergencyInfo.to_dict()['Name'])
+        address = " 📌 Address " + " : " + u'{}'.format(emergencyInfo.to_dict()['Address'])
+        phone = " 📞 Phone " + " : " + u'{}'.format(emergencyInfo.to_dict()['Telephone'])
+        emergencyDetails += name + "\n" + address + "\n" + phone + "\n\n"
         i = i + 1
 
     print(emergencyDetails)
@@ -851,19 +852,21 @@ def provideEmergencyDetails(req):
 
 
 def providePharmacyDetails(req):
-    pharmacyDetails = "Here is a list of Pharmacy Emergency numbers : " + "\n"
+    pharmacyDetails = "Here is a list of Pharmacy Emergency numbers : " + "\n\n"
     pharmacy = db.collection(u'Pharmacy').get()
     i = 1
     for pharmacyInfo in pharmacy:
-        address = "📌 Address" + str(i) + " : " + u'{}'.format(pharmacyInfo.to_dict()['Address'])
-        phone = "📞 Phone" + str(i) + " : " + u'{}'.format(pharmacyInfo.to_dict()['Phone'])
-        pharmacyDetails += address + "\n" + phone + "\n"
+        address = " 📌 Address" + " : " + u'{}'.format(pharmacyInfo.to_dict()['Address'])
+        phone = "📞 Phone" + " : " + u'{}'.format(pharmacyInfo.to_dict()['Phone'])
+        pharmacyDetails += address + "\n" + phone + "\n\n"
+        i = i + 1
 
     print(pharmacyDetails)
     return pharmacyDetails
 
 
 def provideNavigationRoutes(docID, specialization):
+    print(docID)
     doctorID = docID[-1].upper()
     route = ""
 
