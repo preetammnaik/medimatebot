@@ -420,6 +420,7 @@ def createResponseForNavigationalInfo(fulfilment_text):
                     "title": "If you need any additional information, please choose one of the options 👇",
                     "quickReplies": [
                         "Operational Hours ⏳",
+                        "Go to services menu",
                         "Exit❌"
                     ]
                 },
@@ -444,6 +445,7 @@ def createResponseForOpHoursInfo(fulfilment_text):
                     "title": "If you need any additional information, please choose one of the options 👇",
                     "quickReplies": [
                         "Navigational Routes 📍",
+                        "Go to services menu",
                         "Exit ❌"
                     ]
                 },
@@ -569,7 +571,7 @@ def existingUserDetail(req):
                 textForQuickReplies = 'Please choose any option 👇'
                 quickReplies = [
                     "Exit❌",
-                    "Change Preferred Language",
+                    "Change Language",
                     "Go to services menu"
                 ]
                 res = createCommonResponse(response + ' \n \nHow would you like to proceed now?', quickReplies,
@@ -578,7 +580,7 @@ def existingUserDetail(req):
                 textForQuickReplies = 'Please choose any option 👇'
                 quickReplies = [
                     "Notes📄",
-                    "Change Preferred Language",
+                    "Change Language",
                     "Go to services menu"
                 ]
                 res = createCommonResponse(response, quickReplies, textForQuickReplies)
@@ -586,7 +588,7 @@ def existingUserDetail(req):
             textForQuickReplies = 'You can choose any from the following'
             quickReplies = [
                 "Exit❌",
-                "Change Preferred Language",
+                "Change Language",
                 "Go to services menu",
 
             ]
@@ -812,7 +814,8 @@ def provideDoctorDetails(options, specialization, checkListofDocs):
         print(res)
 
     else:
-        res = "The Doctor ID may be valid but does not meet your language requirements. 😥"
+        res = "The Doctor ID may be valid but does not meet your language requirements. 😥\n\n You can also try the following website:\n" \
+              "https://www.tk-aerztefuehrer.de/TK/englische-suche.htm"
         name = "INVALID"
 
     return res, name
@@ -920,7 +923,7 @@ def provideDocDetailNumber(number, specialization, checkListDocID):
     number = int(number)
     print(number)
     # print(len(checkListDocID[0]))
-    if (number < len(checkListDocID[0]) and number != 0):
+    if (number <= len(checkListDocID[0]) and number != 0):
         doctorInfo, name = provideDoctorDetails(checkListDocID[0][number - 1], specialization, checkListDocID)
         doctorID = checkListDocID[0][number - 1]
     else:
