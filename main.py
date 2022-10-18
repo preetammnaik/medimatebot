@@ -33,7 +33,8 @@ NewUseryes = {'fulfillmentMessages': [
                          'quickReplies': ['Find Doctor 🔍', 'Emergency Room Contact 🚨', 'Pharmacy Contact 💊']},
         'platform': 'TELEGRAM'}]}
 finddoc = {'fulfillmentMessages': [
-    {'text': {'text': ['FUCK YOU']}, 'platform': 'TELEGRAM'}, {
+    {'text': {'text': ['Sorry, maybe you mentioned a symptom, specialization or feature not covered under system. '
+                       'Please could you try differently']}, 'platform': 'TELEGRAM'}, {
         'quickReplies': {'title': 'Please choose any option 👇',
                          'quickReplies': ['Find Doctor 🔍', 'Emergency Room Contact 🚨', 'Pharmacy Contact 💊']},
         'platform': 'TELEGRAM'}]}
@@ -253,6 +254,10 @@ def processRequest(req):
                 res = NewUseryes
             elif intentList[-1] == 'New User - no':
                 res = NewUseryes
+            elif intentList[-1] == 'finddoctors':
+                res = finddoc
+
+
 
     elif intent == 'exitConversation':
         quickReplies = [
