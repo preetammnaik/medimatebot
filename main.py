@@ -101,6 +101,8 @@ def processRequest(req):
 
     elif intent == 'finddoctors':
         # print("HIiii")
+        specialization.clear()
+        checkListDocID.clear()
         language = ''
         retrieveLanguage = db.collection(u'Users').document(userID[-1]).get()
         if retrieveLanguage.exists:
@@ -468,7 +470,7 @@ def newUserDetails(req, session):
     if checkUserExistenceByEmail(userEmail.lower()):
         userId = saveUserDetail(session, userEmail.lower(), userName)
         message = "Hello " + userName + ", welcome to MediMate 🙋‍♀️.\n Your userID is : " + userId + \
-                  '\n \nIs there any language that you would like your medical expert to speak in? ' + '\n(e.g. English, German , French or Spanish or Italian)'
+                  '\n \nIs there any language that you would like your medical expert to speak in? ' + '\n(e.g. English, German , French , Spanish or Italian)'
 
         # quickReplies = [
         #     "Find Doctor 🔍",
@@ -692,7 +694,7 @@ def getListofDoctors(req, language):
     language = language.lower()
     print(language)
 
-    result = ["Here is the list of " + specialization + " to choose from:"]
+    result = ["Here is the list of " + specialization+"s" + " to choose from:"]
 
     if parameters.get('doctorspecialization'):
         if str(parameters.get('doctorspecialization')) == str('general physician'):
@@ -736,7 +738,7 @@ def getListofDoctors(req, language):
                     doctors.to_dict()['Name']) + "\n" + "Doctor ID: " + docID + "\n"
                 i = i + 1
                 result.append(docName)
-        elif str(parameters.get('doctorspecialization')) == str('pain'):
+        elif str(parameters.get('doctorspecialization')) == str('dermatologist'):
             pain = processLanguage(specialization, language)
             for doctors in pain:
                 docID = u'{}'.format(doctors.to_dict()['DocID'])
