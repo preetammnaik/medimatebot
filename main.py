@@ -640,7 +640,7 @@ def fetchPreviousConversation(userId):
                 #     pharmacy = doc.to_dict()['reply']
             if note != '':
                 return 'You wanted me to remind you the following from your last appointment:\n' \
-                       '🔸 Specilist: ' + specialist + ' \n🩺 Name: ' + docName + '\n\n 🎗️ Notes:  ' + note, True, True
+                       '🔸 Specialist: ' + specialist + ' \n🩺 Name: ' + docName + '\n\n 🎗️ Notes:  ' + note, True, True
             else:
                 if specialist != '' and docName != '':
                     return 'Looks like, you were looking for a 🔸' + specialist + '. \nI hope your appointment went ' \
