@@ -62,10 +62,21 @@ def saveConversations(query, result, session, userid, intent):
         doc_reff = db.collection(u'UserHistory').document(session + '.' + userid)
         user_conversation = {
             'query': query,
-            'reply': result
+            'reply': result,
+            'intent': intent
         }
-        intentConvo = doc_reff.collection('conversation').document(intent)
+        if intent == 'finddoctors' or intent == 'pharmacyEmergency' or intent == 'emergencyInfo':
+            intentConvo = doc_reff.collection('conversation').document('finddoctors')
+            if intent == 'pharmacyEmergency' or intent == 'emergencyInfo':
+                intentConvo2 = doc_reff.collection('conversation').document('requestNotes')
+                intentConvo2.set({'query': '',
+                                  'reply': '',
+                                  'intent': ''})
+        else:
+            intentConvo = doc_reff.collection('conversation').document(intent)
+
         intentConvo.set(user_conversation)
+
     # print(result)
     # print(session)
 
@@ -100,14 +111,14 @@ def processRequest(req):
         saveConversations(query, req['queryResult']['parameters'].get('doctorspecialization'), session, userID[-1],
                           intent)
 
-        if(len(docNo)>0):
+        if (len(docNo) > 0):
             res = createResponse(getDoctors)
         else:
             quickReplies = [
                 "Go back to Find Doctor 🔍",
                 "Exit❌"
             ]
-            res = createResponseForAdditionalInfo(getDoctors,quickReplies)
+            res = createResponseForAdditionalInfo(getDoctors, quickReplies)
         # return res
 
     elif intent == 'doctorInfo':
@@ -245,8 +256,9 @@ def processRequest(req):
         quickReplies = [
             "Restart ↻"
         ]
-        textForQuickReplies= "If you would like to start the conversation again with Medimate, please choose the option"
-        res = createCommonResponse("Thank you for using Medimate. \nHope you get well soon 😀 ",quickReplies,textForQuickReplies)
+        textForQuickReplies = "If you would like to start the conversation again with Medimate, please choose the option"
+        res = createCommonResponse("Thank you for using Medimate. \nHope you get well soon 😀 ", quickReplies,
+                                   textForQuickReplies)
         specialization.clear()
         checkListDocID.clear()
 
@@ -453,8 +465,7 @@ def newUserDetails(req, session):
     if checkUserExistenceByEmail(userEmail):
         userId = saveUserDetail(session, userEmail, userName)
         message = "Hello " + userName + ", welcome to MediMate 🙋‍♀️.\n Your userID is : " + userId + \
-                  '\n \nIs there any language that you would like your medical expert to speak in? ' + '\nAvailable Languages are :' + '\n1.English\n2.German\n3.French\n4.Spanish\n5.Italian'
-
+                  '\n \nIs there any language that you would like your medical expert to speak in? ' + '\n(e.g. English, German , French or Spanish even Italian'
 
         # quickReplies = [
         #     "Find Doctor 🔍",
@@ -603,26 +614,34 @@ def fetchPreviousConversation(userId):
             for doc in collection.stream():
                 # print(f'{doc.id} => {doc.to_dict()}')
                 if doc.id == 'finddoctors':
-                    specialist = doc.to_dict()['reply']
+                    if doc.to_dict()['intent'] == 'finddoctors':
+                        specialist = doc.to_dict()['reply']
+                    if doc.to_dict()['intent'] == 'emergencyInfo':
+                        emergency = doc.to_dict()['reply']
+                    if doc.to_dict()['intent'] == 'pharmacyEmergency':
+                        pharmacy = doc.to_dict()['reply']
                 if doc.id == 'doctorInfo' or doc.id == 'doctorNumber':
                     docName = doc.to_dict()['reply'].split(':')[1]
                 if doc.id == 'requestNotes':
                     note = doc.to_dict()['reply']
-                if doc.id == 'emergencyInfo':
-                    emergency = doc.to_dict()['reply']
-                if doc.id == 'pharmacyEmergency':
-                    pharmacy = doc.to_dict()['reply']
+                # if doc.id == 'emergencyInfo':
+                #     emergency = doc.to_dict()['reply']
+                # if doc.id == 'pharmacyEmergency':
+                #     pharmacy = doc.to_dict()['reply']
             if note != '':
-                return 'You wanted me to remind you the following from your last appointment with the ' + specialist + ' ' + docName + '\n\n 🎗️' + note, True, True
+                return 'You wanted me to remind you the following from your last appointment:\n' \
+                       '🔸 Specilist:' + specialist + ' \n🩺 Name: ' + docName + '\n\n 🎗️ Notes:  ' + note, True, True
             else:
                 if specialist != '' and docName != '':
-                    return 'Looks like, you were looking for a ' + specialist + '. \nI hope your appointment went ' \
-                                                                                'well with ' + docName + \
+                    return 'Looks like, you were looking for a 🔸' + specialist + '. \nI hope your appointment went ' \
+                                                                                'well with 🩺' + docName + \
                            '.\n\nDo you want me to create a note about the appointment?', True, False
                 elif emergency != '':
-                    return "You had an emergency last time, I hope you are better now.\n", True, False
+                    return "You had an EMERGENCY last time, I hope you are better now.\n"\
+                           "\nDo you want me to create a note about the appointment?'", True, False
                 elif pharmacy != '':
-                    return "You had an pharmacy emergency last time, I hope you are better now.\n", True, False
+                    return "You had an PHARMACY EMERGENCY last time, I hope you are better now.\n" \
+                           "\nDo you want me to create a note about the appointment?'", True, False
                 else:
                     return "You had no prior appointments.\n", False, False
     else:
@@ -680,7 +699,7 @@ def getListofDoctors(req, language):
                 docID = u'{}'.format(doctors.to_dict()['DocID'])
                 doctorID.append(str(docID))
                 # str(i) +
-                docName = '👉' + str(i) + ' ' + u'{}'.format(
+                docName = '👉' + str(i) + '. ' + u'{}'.format(
                     doctors.to_dict()['Name']) + "\n" + "Doctor ID: " + docID + "\n"
                 i = i + 1
                 result.append(docName)
@@ -690,7 +709,7 @@ def getListofDoctors(req, language):
                 docID = u'{}'.format(doctors.to_dict()['DocID'])
                 doctorID.append(str(docID))
                 # str(i) +
-                docName = '👉' + str(i) + ' ' + u'{}'.format(
+                docName = '👉' + str(i) + '. ' + u'{}'.format(
                     doctors.to_dict()['Name']) + "\n" + "Doctor ID: " + docID + "\n"
                 i = i + 1
                 result.append(docName)
@@ -700,7 +719,7 @@ def getListofDoctors(req, language):
                 docID = u'{}'.format(doctors.to_dict()['DocID'])
                 doctorID.append(str(docID))
                 # str(i) +
-                docName = '👉' + str(i) + ' ' + u'{}'.format(
+                docName = '👉' + str(i) + '. ' + u'{}'.format(
                     doctors.to_dict()['Name']) + "\n" + "Doctor ID: " + docID + "\n"
                 i = i + 1
                 result.append(docName)
@@ -710,7 +729,7 @@ def getListofDoctors(req, language):
                 docID = u'{}'.format(doctors.to_dict()['DocID'])
                 doctorID.append(str(docID))
                 # str(i) +
-                docName = '👉' + str(i) + ' ' + u'{}'.format(
+                docName = '👉' + str(i) + '. ' + u'{}'.format(
                     doctors.to_dict()['Name']) + "\n" + "Doctor ID: " + docID + "\n"
                 i = i + 1
                 result.append(docName)
@@ -720,18 +739,18 @@ def getListofDoctors(req, language):
                 docID = u'{}'.format(doctors.to_dict()['DocID'])
                 doctorID.append(str(docID))
                 # str(i) +
-                docName = '👉' + str(i) + ' ' + u'{}'.format(
+                docName = '👉' + str(i) + '. ' + u'{}'.format(
                     doctors.to_dict()['Name']) + "\n" + "Doctor ID: " + docID + "\n"
                 i = i + 1
                 result.append(docName)
         elif str(parameters.get('doctorspecialization')) == str('otherdoctors'):
-            noDoctorFlag="yes"
+            noDoctorFlag = "yes"
 
         # print(result)
-        if len(result) == 1 and noDoctorFlag=="":
+        if len(result) == 1 and noDoctorFlag == "":
             res = "🙁 Unfortunately, there are no doctors with your requirement. Please try again with a different language of communication. "
-            doctorID=[]
-        elif noDoctorFlag=="yes":
+            doctorID = []
+        elif noDoctorFlag == "yes":
             res = "🙁 Unfortunately, we do not have any doctors for your required specialization in our system / Magdeburg. We request you to seek help from the nearest available doctor outside of Magdeburg. Hope you get well soon. "
             doctorID = []
         else:
@@ -888,7 +907,7 @@ def provideOperationalHours(docID, specialization):
         delim = OperationalHours.split(",")
         i = 1
         for opHrs in delim:
-            hours += "⌛ "+str(i) + "." + opHrs + "\n"
+            hours += "⌛ " + str(i) + "." + opHrs + "\n"
             i += 1
     else:
         OperationalHours = 'Unfortunately, the working timings are not available for this Doctor ID. 😟'
@@ -900,7 +919,7 @@ def provideOperationalHours(docID, specialization):
 def provideDocDetailNumber(number, specialization, checkListDocID):
     number = int(number)
     print(number)
-    print(len(checkListDocID[0]))
+    # print(len(checkListDocID[0]))
     if (number < len(checkListDocID[0]) and number != 0):
         doctorInfo, name = provideDoctorDetails(checkListDocID[0][number - 1], specialization, checkListDocID)
         doctorID = checkListDocID[0][number - 1]
