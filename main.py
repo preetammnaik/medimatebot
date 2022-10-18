@@ -242,7 +242,11 @@ def processRequest(req):
                 res = NewUseryes
 
     elif intent == 'exitConversation':
-        res = createResponse("Thank you for using Medimate. \nHope you get well soon 😀 ")
+        quickReplies = [
+            "Restart ↻"
+        ]
+        textForQuickReplies= "If you would like to start the conversation again with Medimate, please choose the option"
+        res = createCommonResponse("Thank you for using Medimate. \nHope you get well soon 😀 ",quickReplies,textForQuickReplies)
         specialization.clear()
         checkListDocID.clear()
 
