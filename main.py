@@ -474,8 +474,10 @@ def newUserDetails(req, session):
 
     if checkUserExistenceByEmail(userEmail.lower()):
         userId = saveUserDetail(session, userEmail.lower(), userName)
-        message = "Hello " + userName + ", welcome to MediMate 🙋‍♀️.\n Your userID is : " + userId + \
-                  '\n \nIs there any language that you would like your medical expert to speak in? ' + '\n(e.g. English, German , French , Spanish or Italian)'
+        message = "Hey there " + userName + ", welcome to MediMate 🙋‍♀️.\n Your userID is : \n" + userId + \
+                  '\n \nI will be more than happy if you want to specify the language of the medical expert to speak ' \
+                  'in ' + '\n(Sorry 🤕, but only these languages are available for now ➡️  English, German , ' \
+                          'French , Spanish or Italian) '
 
         # quickReplies = [
         #     "Find Doctor 🔍",
@@ -484,16 +486,17 @@ def newUserDetails(req, session):
         # ]
         textForQuickReplies = 'Please choose any of the below options 👇'
         quickReplies = [
-            "It's fine",
+            "It's fine 🙂",
             "I would like to specify language",
         ]
         res = createCommonResponse(message, quickReplies, textForQuickReplies)
     else:
-        message = 'Looks like this email id is already registered with us, please try again with a different email Id'
+        message = 'Ohh! 😕 I see that you are already registered with us. Can you please try again with a different ' \
+                  'email Id '
         textForQuickReplies = 'Please choose any of the below options 👇'
         quickReplies = [
-            "New user",
-            "Existing User",
+            "New user 😋",
+            "Existing User 🤗",
         ]
         res = createCommonResponse(message, quickReplies, textForQuickReplies)
     # docs = db.collection('Users').where('UserEmail', '==', userEmail).stream()
@@ -533,7 +536,7 @@ def saveUserLanguagePreference(request):
     doc_ref = db.collection(u'Users').document(userID[-1])
     doc_ref.update({u'preferredLanguage': preferredLanguage})
 
-    message = "I would keep in mind while performing the tasks that you prefer " + preferredLanguage
+    message = "Understood! \n I would keep in mind while performing the tasks that you prefer " + preferredLanguage
     textForQuickReplies = 'I provide the following services, please choose any option 👇'
     quickReplies = ["Find Doctor 🔍",
                     "Emergency Room Contact 🚨",
@@ -563,8 +566,8 @@ def existingUserDetail(req):
     userID.append(userId)
 
     if (userName == "") or (userName is None):
-        message = "Looks like you are not registered with us yet 🙁\n " \
-                  "\n Do you want to register or you would like to re-enter your user-Id"
+        message = "What?? Seems that you are not registered with ME 🙁\n " \
+                  "\n Do you now want to register or you would like to re-enter your user-Id to try again?"
         textForQuickReplies = 'Please choose any option 👇'
         quickReplies = [
             "Re-enter",
@@ -644,10 +647,10 @@ def fetchPreviousConversation(userId):
             else:
                 if specialist != '' and docName != '':
                     return 'Looks like, you were looking for a 🔸' + specialist + '. \nI hope your appointment went ' \
-                                                                                'well with 🩺' + docName + \
+                                                                                  'well with 🩺' + docName + \
                            '.\n\nDo you want me to create a note about the appointment?', True, False
                 elif emergency != '':
-                    return "You had an EMERGENCY last time, I hope you are better now.\n"\
+                    return "You had an EMERGENCY last time, I hope you are better now.\n" \
                            "\nDo you want me to create a note about the appointment?'", True, False
                 elif pharmacy != '':
                     return "You had an PHARMACY EMERGENCY last time, I hope you are better now.\n" \
@@ -699,7 +702,7 @@ def getListofDoctors(req, language):
     language = language.lower()
     print(language)
 
-    result = ["Here is the list of " + specialization+"s" + " to choose from:"]
+    result = ["Here is the list of " + specialization + "s" + " to choose from:"]
 
     if parameters.get('doctorspecialization'):
         if str(parameters.get('doctorspecialization')) == str('general physician'):
@@ -758,10 +761,13 @@ def getListofDoctors(req, language):
 
         # print(result)
         if len(result) == 1 and noDoctorFlag == "":
-            res = "🙁 Unfortunately, there are no doctors with your requirement. Please try again with a different language of communication. "
+            res = "🙁 Unfortunately, there are no doctors with your requirement. Please try again with a different " \
+                  "language of communication. "
             doctorID = []
         elif noDoctorFlag == "yes":
-            res = "🙁 Unfortunately, we do not have any doctors for your required specialization in our system / Magdeburg. We request you to seek help from the nearest available doctor outside of Magdeburg. Hope you get well soon. "
+            res = "🙁 Unfortunately, I do not have any doctors for your required specialization in our system / " \
+                  "Magdeburg. I request you to seek help from the nearest available doctor outside of Magdeburg. " \
+                  "Hope you get well soon. "
             doctorID = []
         else:
             res = "\r\n".join(x for x in result) + "\n" + 'Please enter the ID of a doctor for more info ℹ️'
@@ -807,7 +813,7 @@ def provideDoctorDetails(options, specialization, checkListofDocs):
         res = ""
         name = ""
         if info.exists:
-            name = "🩺 Name : " + u'{}'.format(info.to_dict()['Name'])
+            name = "👨‍⚕️ Name : " + u'{}'.format(info.to_dict()['Name'])
             address = "📌 Address : " + u'{}'.format(info.to_dict()['Address'])
             phone = "📞 Phone : " + u'{}'.format(info.to_dict()['Telephone'])
 
@@ -848,7 +854,7 @@ def provideEmergencyDetails(req):
     print(emergency)
     i = 1
     for emergencyInfo in emergency:
-        name = " 🩺 Name : " + " : " + u'{}'.format(emergencyInfo.to_dict()['Name'])
+        name = " 👨‍⚕ Name : " + " : " + u'{}'.format(emergencyInfo.to_dict()['Name'])
         address = " 📌 Address " + " : " + u'{}'.format(emergencyInfo.to_dict()['Address'])
         phone = " 📞 Phone " + " : " + u'{}'.format(emergencyInfo.to_dict()['Telephone'])
         emergencyDetails += name + "\n" + address + "\n" + phone + "\n\n"
@@ -945,4 +951,4 @@ def provideDocDetailNumber(number, specialization, checkListDocID):
 
 
 if __name__ == "__main__":
-    app.run(debug=True, port=5002)
+    app.run(debug=True, port=5004)
