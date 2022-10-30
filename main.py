@@ -30,13 +30,13 @@ MedimateWelcomeIntent = {
 NewUseryes = {'fulfillmentMessages': [
     {'text': {'text': ['I did not get that. Could you try that again']}, 'platform': 'TELEGRAM'}, {
         'quickReplies': {'title': 'Please choose from these option 👇',
-                         'quickReplies': ['Find Doctor 🔍', 'Emergency Room Contact 🚨', 'Pharmacy Contact 💊']},
+                         'quickReplies': ['Find Doctor', 'Emergency Contacts', 'Pharmacy Contact']},
         'platform': 'TELEGRAM'}]}
 finddoc = {'fulfillmentMessages': [
     {'text': {'text': ['Sorry, maybe you mentioned a symptom, specialization or feature not covered under system. '
                        'Please could you try differently']}, 'platform': 'TELEGRAM'}, {
         'quickReplies': {'title': 'Please choose any option 👇',
-                         'quickReplies': ['Find Doctor 🔍', 'Emergency Room Contact 🚨', 'Pharmacy Contact 💊']},
+                         'quickReplies': ['Find Doctor', 'Emergency Contacts', 'Pharmacy Contact']},
         'platform': 'TELEGRAM'}]}
 
 
@@ -197,8 +197,8 @@ def processRequest(req):
         message = "Noted 👍." + '\n \nAs you already know I provide the following services,'
         textForQuickReplies = 'please choose any option 👇'
         quickReplies = ["Find Doctor 🔍",
-                        "Emergency Room Contact 🚨",
-                        "Pharmacy Contact 💊"
+                        "Emergency Contacts 🚨",
+                        "Pharmacy Contacts"
                         ]
         res = createCommonResponse(message, quickReplies, textForQuickReplies)
         saveConversations(query, notes, session, userID[-1], intent)
@@ -212,7 +212,7 @@ def processRequest(req):
         textForQuickReplies = 'please choose any option 👇'
         quickReplies = [
             "Find Doctor 🔍",
-            "Emergency Information",
+            "Emergency Information 🚨",
             "Exit❌"
         ]
         res = createCommonResponse(pharmacyDetail, quickReplies, textForQuickReplies)
@@ -474,8 +474,8 @@ def newUserDetails(req, session):
 
     if checkUserExistenceByEmail(userEmail.lower()):
         userId = saveUserDetail(session, userEmail.lower(), userName)
-        message = "Hey there " + userName + ", welcome to MediMate 🙋‍♀️.\n Your userID is : \n" + userId + \
-                  '\n \nI will be more than happy if you want to specify the language of the medical expert to speak ' \
+        message = "Hey there " + userName + ", welcome to MediMate 🙋‍♀️.\n Your USER ID is : \n" + userId + \
+                  '\n \nI will be more than happy if you want to specify the language of the medical expert to speak(Only ONE Language) ' \
                   'in ' + '\n(Sorry 🤕, but only these languages are available for now ➡️  English, German , ' \
                           'French , Spanish or Italian) '
 
@@ -486,7 +486,7 @@ def newUserDetails(req, session):
         # ]
         textForQuickReplies = 'Please choose any of the below options 👇'
         quickReplies = [
-            "It's fine 🙂",
+            "It's fine",
             "I would like to specify language",
         ]
         res = createCommonResponse(message, quickReplies, textForQuickReplies)
@@ -495,8 +495,8 @@ def newUserDetails(req, session):
                   'email Id '
         textForQuickReplies = 'Please choose any of the below options 👇'
         quickReplies = [
-            "New user 😋",
-            "Existing User 🤗",
+            "New user",
+            "Existing User",
         ]
         res = createCommonResponse(message, quickReplies, textForQuickReplies)
     # docs = db.collection('Users').where('UserEmail', '==', userEmail).stream()
@@ -514,6 +514,7 @@ def saveUserDetail(session, userEmail, userName):
     global userID
     userIDsplit = userEmail.split("@")
     userId = userIDsplit[0] + "@"
+    userId = userId.lower()
     userID.append(userId)
 
     doc_ref = db.collection(u'Users').document(userId)
@@ -539,8 +540,8 @@ def saveUserLanguagePreference(request):
     message = "Understood! \n I would keep in mind while performing the tasks that you prefer " + preferredLanguage
     textForQuickReplies = 'I provide the following services, please choose any option 👇'
     quickReplies = ["Find Doctor 🔍",
-                    "Emergency Room Contact 🚨",
-                    "Pharmacy Contact 💊"
+                    "Emergency Contacts 🚨",
+                    "Pharmacy Contact"
                     ]
     res = createCommonResponse(message, quickReplies, textForQuickReplies)
     return res
@@ -561,6 +562,7 @@ def checkUserExistenceByEmail(userEmail):
 
 def existingUserDetail(req):
     userId = req['queryResult']['parameters']['user_Id']
+    userId = userId.lower()
     # print(userId)
     userName = checkUserExistence(userId)
     userID.append(userId)
