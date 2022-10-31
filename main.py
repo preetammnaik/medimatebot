@@ -476,7 +476,7 @@ def newUserDetails(req, session):
         userId = saveUserDetail(session, userEmail.lower(), userName)
         message = "Hey there " + userName + ", welcome to MediMate 🙋‍♀️.\n Your USER ID is : \n" + userId + \
                   '\n \nI will be more than happy if you want to specify the language of the medical expert to speak(Only ONE Language) ' \
-                  'in ' + '\n(Sorry 🤕, but only these languages are available for now ➡️  English, German , ' \
+                  + '\n(Sorry 🤕, but only these languages are available for now ➡️  English, German , ' \
                           'French , Spanish or Italian) '
 
         # quickReplies = [
