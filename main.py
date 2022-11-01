@@ -704,7 +704,7 @@ def getListofDoctors(req, language):
     language = language.lower()
     print(language)
 
-    result = ["Here is the list of " + specialization + "s" + " to choose from:"]
+    result = ["Here is the list of " + specialization + "s" + " who speak" + language]
 
     if parameters.get('doctorspecialization'):
         if str(parameters.get('doctorspecialization')) == str('general physician'):
