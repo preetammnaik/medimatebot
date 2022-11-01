@@ -103,7 +103,7 @@ def processRequest(req):
     elif intent == 'finddoctors':
         # print("HIiii")
         specialization.clear()
-        checkListDocID.clear()
+        #checkListDocID.clear()
         language = ''
         retrieveLanguage = db.collection(u'Users').document(userID[-1]).get()
         if retrieveLanguage.exists:
@@ -267,7 +267,7 @@ def processRequest(req):
         res = createCommonResponse("Thank you for using Medimate. \nHope you get well soon 😀 ", quickReplies,
                                    textForQuickReplies)
         specialization.clear()
-        checkListDocID.clear()
+        #checkListDocID.clear()
 
     print(res)
     # print("the query response is stored below")
