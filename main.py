@@ -20,7 +20,7 @@ userID = ['test']
 app = Flask(__name__)
 
 specialization = []
-docID = []
+docID = ['GP001']
 checkListDocID = []
 intentList = []
 intentqList = []
